@@ -19,8 +19,9 @@ enum class TokenType {
   CLOSING_SQUARE_BRACKET, // ]
   EQUAL_SIGN,             // =
   EOI,                    // End-of-input marker
+  NUMBER_OF_TOKEN_TYPES,  // Needs to be declared last, no semantic value
   // NOTE: The DOT language knows several more types of tokens
-  // that are as of now unsupported.
+  // that are not yet supported.
 };
 
 struct Token {

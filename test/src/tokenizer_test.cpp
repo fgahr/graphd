@@ -85,12 +85,12 @@ TEST(TokenizerMultipleTokens, simpleGraph) {
       {TokenType::NAME, "a"},
       {TokenType::UNDIRECTED_EDGE, ""},
       {TokenType::NAME, "b"},
-      {TokenType::SEMICOLON, ""},
       {TokenType::OPENING_SQUARE_BRACKET, ""},
       {TokenType::NAME, "weight"},
       {TokenType::EQUAL_SIGN, ""},
       {TokenType::NUMERAL, "2.3"},
       {TokenType::CLOSING_SQUARE_BRACKET, ""},
+      {TokenType::SEMICOLON, ""},
       {TokenType::CLOSING_BRACE, ""},
       {TokenType::EOI, ""},
   };

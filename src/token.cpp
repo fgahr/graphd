@@ -5,13 +5,11 @@
 #include <stdexcept>
 #include <vector>
 
-static bool is_digit(char c) { return '0' <= c && c <= '9'; }
-
 static std::string downcase(std::string s) {
   std::ostringstream buffer;
   for (auto c : s) {
     if (std::isupper(c)) {
-      buffer << (char)(c + 32);
+      buffer << std::tolower(c);
     } else {
       buffer << c;
     }
@@ -94,7 +92,7 @@ std::string Tokenizer::read_numeral() {
       }
       seen_decimal_point = true;
       buffer << '.';
-    } else if (is_digit(c)) {
+    } else if (std::isdigit(c)) {
       if (!seen_decimal_point) {
         has_integer_part = true;
       }
@@ -159,7 +157,7 @@ Token Tokenizer::next_token() {
         } else {
           return Token{TokenType::NAME, name};
         }
-      } else if (c == '.' || is_digit(c)) {
+      } else if (c == '.' || std::isdigit(c)) {
         in.putback(c);
         return Token{TokenType::NUMERAL, read_numeral()};
       } else {
