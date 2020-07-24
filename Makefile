@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test clean
 
 CXX = clang++
 CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra
@@ -16,6 +16,9 @@ $(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
 	$(CXX) -c $(CXXFLAGS) $(OPT) $^ -o $@
 
 test: toktest
+
+clean:
+	rm -f $(OBJ)/* $(TBIN)/*
 
 toktest: $(TBIN)/tokenizer_test
 	$<
