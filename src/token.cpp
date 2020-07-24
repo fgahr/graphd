@@ -11,6 +11,7 @@ Tokenizer::Tokenizer(std::istream &in) : in{in} {}
 
 std::string Tokenizer::read_string() {
   std::ostringstream buffer;
+  std::string str{""};
 
   while (true) {
     int c = in.get();
@@ -21,11 +22,13 @@ std::string Tokenizer::read_string() {
       buffer << (char)in.get();
       continue;
     case '"':
-      return buffer.str();
+      str = buffer.str();
+      if (str.empty()) {
+        throw std::runtime_error{"error: empty string"};
+      }
+      return str;
     }
   }
-
-  return buffer.str();
 }
 
 std::string Tokenizer::read_name() {
@@ -40,7 +43,11 @@ std::string Tokenizer::read_name() {
     } else {
       // semicolon, comma, etc.
       in.putback(c);
-      return buffer.str();
+      std::string name = buffer.str();
+      if (name.empty()) {
+        throw std::logic_error{"attempting to parse empty name"};
+      }
+      return name;
     }
   }
 }
@@ -66,8 +73,6 @@ std::string Tokenizer::read_numeral() {
       buffer << (char)c;
     } else {
       if (!(seen_decimal_point || has_integer_part)) {
-        // This condition would indicate a logic error in the program,
-        // i.e. the function shouldn't have been called in the first place.
         std::logic_error{"attempting to parse empty numeral"};
       }
       in.putback(c);
