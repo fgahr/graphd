@@ -26,6 +26,13 @@ TEST(TokenizerSingleToken, keyword) {
   EXPECT_EQ(token.value, "strict");
 }
 
+TEST(TokenizerSingleToken, unsupported_keyword) {
+  std::istringstream in{"NODE"};
+  Tokenizer tok{in};
+
+  ASSERT_ANY_THROW(tok.next_token());
+}
+
 TEST(TokenizerSingleToken, numeral) {
   std::istringstream in{".23"};
   Tokenizer tok{in};

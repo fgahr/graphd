@@ -17,16 +17,24 @@ static std::string downcase(std::string s) {
   return buffer.str();
 }
 
-static std::vector<std::string> keywords{"node",    "edge",     "graph",
-                                         "digraph", "subgraph", "strict"};
+static std::vector<std::string> supported_keywords{"graph", "strict"};
+static std::vector<std::string> unsupported_keywords{"node", "edge", "digraph",
+                                                     "subgraph"};
 
 static bool is_keyword(std::string s) {
   s = downcase(s);
-  for (auto kw : keywords) {
+  for (auto kw : supported_keywords) {
     if (s == kw) {
       return true;
     }
   }
+
+  for (auto kw : unsupported_keywords) {
+    if (s == kw) {
+      throw std::runtime_error{"unsupported keyword: " + s};
+    }
+  }
+
   return false;
 }
 
