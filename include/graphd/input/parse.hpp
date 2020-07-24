@@ -10,13 +10,13 @@
 namespace graphd::input {
 
 /**
- * The possible types of expressions. This is a subset of the DOT language. See
- * http://www.graphviz.org/doc/info/lang.html for the full grammar.
+ * The possible types of expressions. This is a small subset of the DOT
+ * language. See http://www.graphviz.org/doc/info/lang.html for the full
+ * grammar.
  */
 enum class ExprType {
   GRAPH,
   STATEMENT_LIST,
-  NODE_STATEMENT,
   EDGE_STATEMENT,
   ATTRIBUTE_LIST,
   TOKEN_EXPR,
