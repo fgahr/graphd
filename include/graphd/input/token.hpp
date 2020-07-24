@@ -42,6 +42,9 @@ public:
   std::optional<Token> next_token();
 
 private:
+  std::string read_string();
+  std::string read_name();
+  std::string read_numeral();
   std::istream &in;
 };
 } // namespace graphd::input
