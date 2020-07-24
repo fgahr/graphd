@@ -3,8 +3,20 @@
 #include <cctype>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 static bool is_digit(char c) { return '0' <= c && c <= '9'; }
+
+static std::vector<std::string> keywords{"strict", "graph", "digraph"};
+
+static bool is_keyword(std::string s) {
+  for (auto kw : keywords) {
+    if (s == kw) {
+      return true;
+    }
+  }
+  return false;
+}
 
 namespace graphd::input {
 Tokenizer::Tokenizer(std::istream &in) : in{in} {}
@@ -27,6 +39,8 @@ std::string Tokenizer::read_string() {
         throw std::runtime_error{"error: empty string"};
       }
       return str;
+    default:
+      buffer << (char)c;
     }
   }
 }
@@ -81,14 +95,15 @@ std::string Tokenizer::read_numeral() {
   }
 }
 
-std::optional<Token> Tokenizer::next_token() {
+Token Tokenizer::next_token() {
   // NOTE: Error handling not bulletproof. In particular, badbit needs to be
   // checked after putback.
+  std::string name;
   while (!in.eof()) {
     int c = in.get();
     switch (c) {
     case EOF:
-      return std::nullopt;
+      return Token{TokenType::EOI, ""};
     case ' ':
     case '\t':
     case '\n':
@@ -124,7 +139,12 @@ std::optional<Token> Tokenizer::next_token() {
     default:
       if (std::isalpha(c) || c == '_') {
         in.putback(c);
-        return Token{TokenType::NAME, read_name()};
+        name = read_name();
+        if (is_keyword(name)) {
+          return Token{TokenType::KEYWORD, name};
+        } else {
+          return Token{TokenType::NAME, name};
+        }
       } else if (c == '.' || is_digit(c)) {
         in.putback(c);
         return Token{TokenType::NUMERAL, read_numeral()};
@@ -135,6 +155,6 @@ std::optional<Token> Tokenizer::next_token() {
     }
   }
 
-  return std::nullopt;
+  return Token{TokenType::EOI, ""};
 }
 } // namespace graphd::input

@@ -2,14 +2,11 @@
 #define _GRAPHD_TOKEN_H_
 
 #include <istream>
-#include <optional>
 #include <string>
 
 namespace graphd::input {
 enum class TokenType {
-  STRICT,                 // keyword: strict
-  GRAPH,                  // keyword: graph
-  DIGRAPH,                // keyword: digraph
+  KEYWORD,                // strict|graph|digraph
   NAME,                   // [_a-zA-Z][_0-9a-zA-Z]*
   NUMERAL,                // [-]?(.[0-9]+|[0-9]+(.[0-9]*)?)
   SEMICOLON,              // ;
@@ -21,6 +18,7 @@ enum class TokenType {
   OPENING_SQUARE_BRACKET, // [
   CLOSING_SQUARE_BRACKET, // ]
   EQUAL_SIGN,             // =
+  EOI,                    // End-of-input marker
   // NOTE: The DOT language knows several more types of tokens
   // that are as of now unsupported.
 };
@@ -37,9 +35,9 @@ public:
    */
   Tokenizer(std::istream &in);
   /**
-   * The next token from the input stream, or nullopt if exhausted.
+   * The next token from the input stream.
    */
-  std::optional<Token> next_token();
+  Token next_token();
 
 private:
   std::string read_string();
