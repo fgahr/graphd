@@ -1,24 +1,79 @@
 #include <graphd/input/token.hpp>
 
 #include <cctype>
+#include <sstream>
 #include <stdexcept>
+
+static bool is_digit(char c) { return '0' <= c && c <= '9'; }
 
 namespace graphd::input {
 Tokenizer::Tokenizer(std::istream &in) : in{in} {}
 
 std::string Tokenizer::read_string() {
-  // TODO
-  return "";
+  std::ostringstream buffer;
+
+  while (true) {
+    int c = in.get();
+    switch (c) {
+    case EOF:
+      throw std::runtime_error{"error: encountered EOF while parsing string"};
+    case '\\':
+      buffer << (char)in.get();
+      continue;
+    case '"':
+      return buffer.str();
+    }
+  }
+
+  return buffer.str();
 }
 
 std::string Tokenizer::read_name() {
-  // TODO
-  return "";
+  std::ostringstream buffer;
+
+  while (true) {
+    int c = in.get();
+    if (std::isalnum(c)) {
+      buffer << (char)c;
+    } else if (c == EOF) {
+      return buffer.str();
+    } else {
+      // semicolon, comma, etc.
+      in.putback(c);
+      return buffer.str();
+    }
+  }
 }
 
 std::string Tokenizer::read_numeral() {
-  // TODO
-  return "";
+  std::ostringstream buffer;
+
+  bool has_integer_part = false;
+  bool seen_decimal_point = false;
+
+  while (true) {
+    int c = in.get();
+    if (c == '.') {
+      if (seen_decimal_point) {
+        throw std::runtime_error{"invalid numeral: " + buffer.str() + "."};
+      }
+      seen_decimal_point = true;
+      buffer << '.';
+    } else if (is_digit(c)) {
+      if (!seen_decimal_point) {
+        has_integer_part = true;
+      }
+      buffer << (char)c;
+    } else {
+      if (!(seen_decimal_point || has_integer_part)) {
+        // This condition would indicate a logic error in the program,
+        // i.e. the function shouldn't have been called in the first place.
+        std::logic_error{"attempting to parse empty numeral"};
+      }
+      in.putback(c);
+      return buffer.str();
+    }
+  }
 }
 
 std::optional<Token> Tokenizer::next_token() {
@@ -65,7 +120,7 @@ std::optional<Token> Tokenizer::next_token() {
       if (std::isalpha(c) || c == '_') {
         in.putback(c);
         return Token{TokenType::NAME, read_name()};
-      } else if ('0' <= c && c <= '9') {
+      } else if (c == '.' || is_digit(c)) {
         in.putback(c);
         return Token{TokenType::NUMERAL, read_numeral()};
       } else {
