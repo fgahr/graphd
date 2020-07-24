@@ -27,6 +27,10 @@ enum class TokenType {
 struct Token {
   TokenType type;
   std::string value;
+  /**
+   * Whether this token can represent an identifier.
+   */
+  bool isIdentifier();
 };
 
 class Tokenizer {

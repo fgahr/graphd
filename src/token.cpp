@@ -31,6 +31,16 @@ static bool is_keyword(std::string s) {
 }
 
 namespace graphd::input {
+bool Token::isIdentifier() {
+  switch (this->type) {
+  case TokenType::NAME:
+  case TokenType::NUMERAL:
+    return true;
+  default:
+    return false;
+  }
+}
+
 Tokenizer::Tokenizer(std::istream &in) : in{in} {}
 
 std::string Tokenizer::read_string() {
