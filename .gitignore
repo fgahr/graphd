@@ -1,5 +1,6 @@
 # Dev files
 .ccls-cache
 
-# Output directory
+# Binary output directories
 bin/*
+test/bin/*
