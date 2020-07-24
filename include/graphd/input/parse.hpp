@@ -68,7 +68,6 @@ private:
   bool reduce();
   std::vector<Reduction *> reductions;
   ParseStack stack;
-  Token lookahead;
   Tokenizer tok;
 };
 } // namespace graphd::input

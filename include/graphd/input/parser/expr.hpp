@@ -28,7 +28,7 @@ class Statement : public Expression {
 public:
   static bool is_instance(Expression *e) {
     switch (e->type()) {
-    case ExprType::NODE_STATEMENT:
+    // NOTE: other statement types currently unsupported
     case ExprType::EDGE_STATEMENT:
       return true;
     default:
