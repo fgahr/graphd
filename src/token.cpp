@@ -7,9 +7,23 @@
 
 static bool is_digit(char c) { return '0' <= c && c <= '9'; }
 
-static std::vector<std::string> keywords{"strict", "graph", "digraph"};
+static std::string downcase(std::string s) {
+  std::ostringstream buffer;
+  for (auto c : s) {
+    if (std::isupper(c)) {
+      buffer << (char)(c + 32);
+    } else {
+      buffer << c;
+    }
+  }
+  return buffer.str();
+}
+
+static std::vector<std::string> keywords{"node",    "edge",     "graph",
+                                         "digraph", "subgraph", "strict"};
 
 static bool is_keyword(std::string s) {
+  s = downcase(s);
   for (auto kw : keywords) {
     if (s == kw) {
       return true;
@@ -141,7 +155,7 @@ Token Tokenizer::next_token() {
         in.putback(c);
         name = read_name();
         if (is_keyword(name)) {
-          return Token{TokenType::KEYWORD, name};
+          return Token{TokenType::KEYWORD, downcase(name)};
         } else {
           return Token{TokenType::NAME, name};
         }

@@ -6,7 +6,7 @@
 
 namespace graphd::input {
 enum class TokenType {
-  KEYWORD,                // strict|graph|digraph
+  KEYWORD,                // strict|graph|digraph|...
   NAME,                   // [_a-zA-Z][_0-9a-zA-Z]*
   NUMERAL,                // [-]?(.[0-9]+|[0-9]+(.[0-9]*)?)
   SEMICOLON,              // ;

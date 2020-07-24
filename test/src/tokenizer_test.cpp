@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <sstream>
+#include <vector>
 
 using namespace graphd::input;
 
@@ -16,7 +17,7 @@ TEST(TokenizerGeneral, eof) {
 }
 
 TEST(TokenizerSingleToken, keyword) {
-  std::istringstream in{"strict"};
+  std::istringstream in{"Strict"};
   Tokenizer tok{in};
 
   auto token = tok.next_token();
@@ -71,13 +72,13 @@ TEST(TokenizerSingleTokenFail, string) {
 
 TEST(TokenizerMultipleTokens, simpleGraph) {
   std::stringstream in;
-  in << "graph gname {\n"
-     << "    a -- b; [weight=2.3]\n"
+  in << "GRAPH gname {\n"
+     << "    a -- b [weight=2.3];\n"
      << "}";
   Tokenizer tok{in};
 
   // clang-format off
-  Token expected[14] = {
+  std::vector<Token> expected{
       {TokenType::KEYWORD, "graph"},
       {TokenType::NAME, "gname"},
       {TokenType::OPENING_BRACE, ""},
