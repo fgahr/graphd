@@ -1,7 +1,7 @@
 .PHONY: test clean
 
 CXX = clang++
-CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra
+CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra -Wpedantic
 OPT = -O2
 TESTLIBS = -lgtest -lgtest_main
 

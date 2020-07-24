@@ -9,7 +9,7 @@ static std::string downcase(std::string s) {
   std::ostringstream buffer;
   for (auto c : s) {
     if (std::isupper(c)) {
-      buffer << std::tolower(c);
+      buffer << (char)std::tolower(c);
     } else {
       buffer << c;
     }
