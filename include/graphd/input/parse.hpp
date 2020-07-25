@@ -57,8 +57,8 @@ public:
 };
 
 /**
- * A simple shift-reduce pharser, completely adequate for the subset of the DOT
- * language we aim to support.
+ * A simple shift-reduce-type parser without a parsing table, completely
+ * adequate for the subset of the DOT language we aim to support.
  */
 class Parser {
 public:

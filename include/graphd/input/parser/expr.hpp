@@ -77,7 +77,7 @@ public:
   virtual void apply_to_graph(Graph &g) override {
     // TODO
   }
-  virtual ~FullGraph() = default;
+  virtual ~FullGraph() { delete stmtList; }
 
   static bool is_instance(Expression *e) {
     return e->type() == ExprType::GRAPH;

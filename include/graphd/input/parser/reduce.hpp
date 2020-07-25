@@ -23,6 +23,8 @@ public:
      * <-- bottom                     top-->
      * non-stmts | stmt | ..stmts.. | stmt
      *                                ^^i^^
+     * In most cases there will be at most one statement on top of the stack but
+     * we cannot asssume that.
      */
     while (i > 0 && expr::Statement::is_instance(s.at(i))) {
       // Jump across statements
@@ -83,16 +85,21 @@ class ToGraph : public Reduction {
 public:
   virtual bool perform(Token lookahead, ParseStack &s) override {
     if (lookahead.type != TokenType::EOI) {
-      // Input must not contain more than just a graph definition.
+      /*
+       * Either we're not yet at the end of the graph or the input is malformed.
+       * In both cases, do nothing.
+       */
       return false;
     }
 
     /*
-     * Structure:
+     * Expected stack content:
      * [strict] (graph|digraph) [ID] '{' stmt_list '}'
      */
     std::string name = "";
     expr::StmtList *stmtList = nullptr;
+
+    // FIXME: working front to back is probably easier to write and follow
 
     Expression *e;
     int idx = s.size() - 1;
