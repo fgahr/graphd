@@ -38,6 +38,15 @@ public:
   virtual ~Statement() = default;
 };
 
+class EdgeStmt : public Statement {
+public:
+  virtual ExprType type() override { return ExprType::EDGE_STATEMENT; }
+  virtual void apply_to_graph(Graph &g) override {
+    // TODO
+  }
+  virtual ~EdgeStmt() = default;
+};
+
 class StmtList : public Expression {
 public:
   virtual ExprType type() override { return ExprType::STATEMENT_LIST; }

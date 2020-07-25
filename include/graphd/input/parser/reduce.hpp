@@ -15,30 +15,65 @@ template <TokenType tt> bool is_tkn(Expression *e) {
 
 class ToStmtList : public Reduction {
 public:
-  virtual bool perform(ParseStack &s) override {
-    if (s.size() < 2) {
+  virtual bool perform(Token, ParseStack &s) override {
+    int lastidx = s.size() - 1;
+    int i = lastidx;
+    /*
+     * We can reduce if the top of the stack is made up of statements
+     * <-- bottom                     top-->
+     * non-stmts | stmt | ..stmts.. | stmt
+     *                                ^^i^^
+     */
+    while (i > 0 && expr::Statement::is_instance(s.at(i))) {
+      // Jump across statements
+      --i;
+    }
+
+    if (i == lastidx) {
+      // No statements at the top of the stack
       return false;
     }
 
-    if (!expr::Statement::is_instance(s.back())) {
-      return false;
+    expr::StmtList *list = nullptr;
+    /*
+     * We hope to have the following on the top of the stack:
+     * <--bottom                         top-->
+     * non-stmts | slist | stmt | stmt | stmts..
+     *             ^^i^^
+     * Then we can proceed to merge all the statements into the list.
+     */
+    if (expr::StmtList::is_instance(s.at(i))) {
+      list = static_cast<expr::StmtList *>(s.at(i));
     } else {
-      Expression *next_to_last = s.at(s.size() - 2);
-      if (expr::StmtList::is_instance(next_to_last)) {
-        expr::StmtList *sl = static_cast<expr::StmtList *>(next_to_last);
-        sl->add_statement(AS_STMT(s.back()));
-        s.pop_back();
-        return true;
-      } else {
-        // Turn the last statement into a list by itself.
-        expr::Statement *stmt = AS_STMT(s.back());
-        s.pop_back();
-        expr::StmtList *list = new expr::StmtList;
-        list->add_statement(stmt);
-        s.push_back(list);
-      }
+      /*
+       * Stack layout:
+       * <--bottom                     top-->
+       * non-stmts | non-stmt | stmt | stmts...
+       *              ^^i^^ ->->-^
+       * Thus, transform the first statement into a statement list.
+       */
+      i++;
+      expr::Statement *first = AS_STMT(s.at(i));
+      expr::StmtList *list = new expr::StmtList;
+      list->add_statement(first);
+      s.at(i) = list;
     }
-    return false;
+
+    /*
+     * Now, gather all statements on top of the stack into the list.
+     */
+    for (int j = i + 1; j <= lastidx; j++) {
+      list->add_statement(AS_STMT(s.at(j)));
+    }
+
+    /*
+     * Finally, remove the statements from the stack.
+     */
+    for (int j = lastidx; j > i; j--) {
+      s.pop_back();
+    }
+
+    return true;
   }
   virtual ~ToStmtList() = default;
 };
@@ -46,7 +81,12 @@ public:
 class ToGraph : public Reduction {
 
 public:
-  virtual bool perform(ParseStack &s) override {
+  virtual bool perform(Token lookahead, ParseStack &s) override {
+    if (lookahead.type != TokenType::EOI) {
+      // Input must not contain more than just a graph definition.
+      return false;
+    }
+
     /*
      * Structure:
      * [strict] (graph|digraph) [ID] '{' stmt_list '}'

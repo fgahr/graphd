@@ -52,10 +52,14 @@ public:
    * Returns true if it succeeded, false otherwise.
    * When false is returned, the stack must not be altered.
    */
-  virtual bool perform(ParseStack &s) = 0;
+  virtual bool perform(Token lookahead, ParseStack &s) = 0;
   virtual ~Reduction() = default;
 };
 
+/**
+ * A simple shift-reduce pharser, completely adequate for the subset of the DOT
+ * language we aim to support.
+ */
 class Parser {
 public:
   Expression *parse();
@@ -63,11 +67,12 @@ public:
   ~Parser();
 
 private:
-  Parser(Tokenizer tokenizer);
+  Parser(Tokenizer tokenizer, Token lookahead);
   bool shift();
   bool reduce();
   std::vector<Reduction *> reductions;
   ParseStack stack;
+  Token lookahead;
   Tokenizer tok;
 };
 } // namespace graphd::input

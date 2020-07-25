@@ -20,18 +20,19 @@ Expression *Parser::parse() {
 }
 
 bool Parser::shift() {
-  Token token = tok.next_token();
-  if (token.type == TokenType::EOI) {
+  if (lookahead.type == TokenType::EOI) {
     return false;
   }
-  stack.push_back(new expr::TokenExpr(token));
+
+  stack.push_back(new expr::TokenExpr(lookahead));
+  Token lookahead = tok.next_token();
   return true;
 }
 
 bool Parser::reduce() {
   bool performed = false;
   for (auto red : reductions) {
-    if (red->perform(stack)) {
+    if (red->perform(lookahead, stack)) {
       performed = true;
     }
   }
@@ -40,10 +41,12 @@ bool Parser::reduce() {
 
 Parser Parser::of(std::istream &in) {
   Tokenizer tok{in};
-  return Parser{tok};
+  Token next = tok.next_token();
+  return Parser{tok, next};
 }
 
-Parser::Parser(Tokenizer tokenizer) : tok{tokenizer}, stack{} {
+Parser::Parser(Tokenizer tokenizer, Token lookahead)
+    : tok{tokenizer}, lookahead{lookahead}, stack{} {
   this->reductions =
       std::vector<Reduction *>{new reduce::ToGraph, new reduce::ToStmtList};
 }
