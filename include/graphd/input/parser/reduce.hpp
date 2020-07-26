@@ -30,8 +30,6 @@ private:
   void reset();
   std::string n1name;
   std::string n2name;
-  std::string attr_name;
-  std::string attr_val;
   // Gather all obsolete expressions here
   std::vector<Expression *> deletable;
   StackPattern *pattern;
