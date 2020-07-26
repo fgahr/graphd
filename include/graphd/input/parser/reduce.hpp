@@ -18,7 +18,24 @@ public:
   virtual ~Reduction() = default;
 };
 
-class StackState;
+class StackPattern;
+
+class ToStatement : public Reduction {
+public:
+  virtual bool perform(Token, ParseStack &s) override;
+  virtual ~ToStatement();
+  ToStatement();
+
+private:
+  void reset();
+  std::string n1name;
+  std::string n2name;
+  std::string attr_name;
+  std::string attr_val;
+  // Gather all obsolete expressions here
+  std::vector<Expression *> deletable;
+  StackPattern *pattern;
+};
 
 /**
  * Reduction for a group of individual statements into a statement list.
@@ -27,9 +44,13 @@ class ToStmtList : public Reduction {
 public:
   virtual bool perform(Token, ParseStack &s) override;
   virtual ~ToStmtList();
+  ToStmtList();
 
 private:
-  StackState *state;
+  void reset();
+  std::vector<Expression *> list;
+  std::vector<Expression *> statements;
+  StackPattern *pattern;
 };
 
 /**
@@ -45,7 +66,7 @@ private:
   void reset();
   std::string name;
   std::vector<Expression *> stmtList;
-  StackState *state;
+  StackPattern *pattern;
 };
 
 } // namespace graphd::input::reduce

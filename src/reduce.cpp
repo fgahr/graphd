@@ -1,5 +1,7 @@
 #include <graphd/input/parser/reduce.hpp>
 
+#include <utility>
+
 #define AS_TOK(e) static_cast<expr::TokenExpr *>(e)
 #define AS_STMT(e) static_cast<expr::Statement *>(e)
 
@@ -29,7 +31,7 @@ bool TokenP(Expression *e) {
   return false;
 }
 
-struct StackElement {
+struct ExprPattern {
   /**
    * How many expressions to expect.
    */
@@ -98,21 +100,69 @@ private:
   }
 };
 
-class StackState {
-  using Self = StackState &;
+class StackPatternBuilder;
 
+class StackPattern {
 public:
   bool matches(ParseStack &s);
-  StackState(std::vector<StackElement> &&elems) : elements{elems} {}
 
 private:
-  std::vector<StackElement> elements;
+  friend class StackPatternBuilder;
+  StackPattern(std::vector<ExprPattern> &&patterns) : epats{patterns} {}
+  std::vector<ExprPattern> epats;
 };
 
-bool StackState::matches(ParseStack &s) {
+class StackPatternBuilder {
+  using Self = StackPatternBuilder &;
+  using epred = expr::Predicate;
+  // NOTE: same declaration as ParseStack but used differently
+  using evec = std::vector<Expression *>;
+  using str = std::string;
+
+public:
+  static StackPatternBuilder get() { return StackPatternBuilder{}; }
+  StackPattern *build();
+  Self one(epred pred, evec *exp_into = nullptr, str *val_into = nullptr) {
+    epats.push_back(ExprPattern{
+        ExprPattern::MANDATORY,
+        pred,
+        exp_into,
+        val_into,
+    });
+    return *this;
+  }
+  Self optional(epred pred, evec *exp_into = nullptr, str *val_into = nullptr) {
+    epats.push_back(ExprPattern{
+        ExprPattern::OPTIONAL,
+        pred,
+        exp_into,
+        val_into,
+    });
+    return *this;
+  }
+  Self at_least_one(epred pred, evec *exp_into = nullptr) {
+    epats.push_back(ExprPattern{
+        ExprPattern::ONE_OR_MORE,
+        pred,
+        exp_into,
+        // Retrieving values does not apply here
+        nullptr,
+    });
+    return *this;
+  }
+
+private:
+  std::vector<ExprPattern> epats;
+};
+
+StackPattern *StackPatternBuilder::build() {
+  return new StackPattern{std::move(epats)};
+}
+
+bool StackPattern::matches(ParseStack &s) {
   // Need to traverse both stack and elements back to front.
   auto stack_it = s.rbegin();
-  for (auto el_it = elements.rbegin(); el_it != elements.rend(); el_it++) {
+  for (auto el_it = epats.rbegin(); el_it != epats.rend(); el_it++) {
     if (stack_it == s.rend()) {
       return false;
     }
@@ -124,6 +174,28 @@ bool StackState::matches(ParseStack &s) {
   }
   return true;
 }
+
+bool ToStatement::perform(Token, ParseStack &s) {
+  if (pattern->matches(s)) {
+    for (auto ex : deletable) {
+      delete ex;
+    }
+
+    return true;
+  }
+  return false;
+}
+
+ToStatement::ToStatement() {
+  pattern = StackPatternBuilder::get()
+                .one(TokenP<TokenType::NAME>, &deletable, &n1name)
+                .one(TokenP<TokenType::UNDIRECTED_EDGE>, &deletable)
+                .one(TokenP<TokenType::NAME>, &deletable, &n2name)
+                .one(TokenP<TokenType::SEMICOLON>, &deletable)
+                // TODO: Add attribute (list)
+                .build();
+}
+ToStatement::~ToStatement() { delete pattern; }
 
 bool ToStmtList::perform(Token, ParseStack &s) {
   int lastidx = s.size() - 1;
@@ -188,19 +260,31 @@ bool ToStmtList::perform(Token, ParseStack &s) {
   return true;
 }
 
-ToStmtList::~ToStmtList() { delete state; }
+void ToStmtList::reset() {
+  list.clear();
+  statements.clear();
+}
+
+ToStmtList::ToStmtList() {
+  pattern = StackPatternBuilder::get()
+                .optional(expr::StmtList::is_instance, &list)
+                .at_least_one(expr::Statement::is_instance, &statements)
+                .build();
+}
+
+ToStmtList::~ToStmtList() { delete pattern; }
 
 bool ToGraph::perform(Token lookahead, ParseStack &s) {
   if (lookahead.type != TokenType::EOI) {
     /*
-     * Either we're not yet at the end of the graph or the input was malformed.
-     * In both cases, do nothing.
+     * Either we're not yet at the end of the graph or the input was
+     * malformed. In both cases, do nothing.
      */
     return false;
   }
 
-  if (state->matches(s)) {
-    // Some expressions will be inaccessible afterwards, so delete them
+  if (pattern->matches(s)) {
+    // Some expressions will be inaccessible, delete what we don't need.
     for (auto ex : s) {
       // We still need the statements!
       if (ex != stmtList.front()) {
@@ -209,8 +293,8 @@ bool ToGraph::perform(Token lookahead, ParseStack &s) {
     }
 
     /*
-     * FIXME: We just assume that the graph occupies the entire stack. Otherwise
-     * we have malformed input. We ignore that possibility for now.
+     * FIXME: We just assume that the graph occupies the entire stack.
+     * Otherwise we have malformed input. We ignore that possibility for now.
      */
     s.clear();
     s.push_back(new expr::FullGraph(
@@ -221,43 +305,22 @@ bool ToGraph::perform(Token lookahead, ParseStack &s) {
   }
 }
 
-ToGraph::ToGraph() {
-  state = new StackState{{
-      StackElement{
-          StackElement::OPTIONAL,
-          TokenP<TokenType::KEYWORD, kw_strict>,
-      },
-      StackElement{
-          StackElement::MANDATORY,
-          TokenP<TokenType::KEYWORD, kw_graph>,
-      },
-      StackElement{
-          StackElement::OPTIONAL,
-          TokenP<TokenType::NAME, any_value>,
-          nullptr,
-          &name,
-      },
-      StackElement{
-          StackElement::MANDATORY,
-          TokenP<TokenType::OPENING_BRACE>,
-      },
-      StackElement{
-          StackElement::MANDATORY,
-          expr::StmtList::is_instance,
-          &stmtList,
-      },
-      StackElement{
-          StackElement::MANDATORY,
-          TokenP<TokenType::CLOSING_BRACE>,
-      },
-  }};
-}
-
 void ToGraph::reset() {
   name = "";
   stmtList.clear();
 }
 
-ToGraph::~ToGraph() { delete state; }
+ToGraph::ToGraph() {
+  pattern = StackPatternBuilder::get()
+                .optional(TokenP<TokenType::KEYWORD, kw_strict>)
+                .one(TokenP<TokenType::KEYWORD, kw_graph>)
+                .optional(TokenP<TokenType::NAME, any_value>, nullptr, &name)
+                .one(TokenP<TokenType::OPENING_BRACE>)
+                .one(expr::StmtList::is_instance, &stmtList)
+                .one(TokenP<TokenType::CLOSING_BRACE>)
+                .build();
+}
+
+ToGraph::~ToGraph() { delete pattern; }
 
 } // namespace graphd::input::reduce
