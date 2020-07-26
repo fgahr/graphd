@@ -4,6 +4,9 @@
 #include <graphd/input/parse.hpp>
 
 namespace graphd::input::expr {
+
+typedef bool (*Predicate)(Expression *);
+
 class TokenExpr : public Expression {
 public:
   virtual ExprType type() override { return ExprType::TOKEN_EXPR; }
@@ -12,6 +15,9 @@ public:
   }
   virtual ~TokenExpr() = default;
 
+  static bool is_instance(Expression *e) {
+    return e->type() == ExprType::TOKEN_EXPR;
+  }
   template <TokenType tt> static bool is_instance(Expression *e) {
     if (e->type() != ExprType::TOKEN_EXPR) {
       return false;

@@ -18,13 +18,18 @@ public:
   virtual ~Reduction() = default;
 };
 
+class StackState;
+
 /**
  * Reduction for a group of individual statements into a statement list.
  */
 class ToStmtList : public Reduction {
 public:
   virtual bool perform(Token, ParseStack &s) override;
-  virtual ~ToStmtList() = default;
+  virtual ~ToStmtList();
+
+private:
+  StackState *state;
 };
 
 /**
@@ -33,7 +38,14 @@ public:
 class ToGraph : public Reduction {
 public:
   virtual bool perform(Token lookahead, ParseStack &s) override;
-  virtual ~ToGraph() = default;
+  virtual ~ToGraph();
+  ToGraph();
+
+private:
+  void reset();
+  std::string name;
+  std::vector<Expression *> stmtList;
+  StackState *state;
 };
 
 } // namespace graphd::input::reduce

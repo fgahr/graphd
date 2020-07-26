@@ -8,11 +8,121 @@ template <TokenType tt> bool is_tkn(Expression *e) {
   return expr::TokenExpr::is_instance<tt>(e);
 }
 
-static std::string getval(expr::TokenExpr *e) {
-  if (e->token.type != TokenType::KEYWORD) {
-    throw std::logic_error{"mistakenly encountered non-keyword token"};
+static std::string getval(Expression *e) {
+  if (expr::TokenExpr::is_instance(e)) {
+    throw std::logic_error{"mistakenly encountered non-token expression"};
   }
-  return e->token.value;
+  return AS_TOK(e)->token.value;
+}
+
+typedef bool (*ValuePredicate)(const std::string);
+
+static bool any_value(const std::string) { return true; }
+static bool kw_strict(const std::string s) { return s == "strict"; }
+static bool kw_graph(const std::string s) { return s == "graph"; }
+
+template <TokenType tt, ValuePredicate vp = any_value>
+bool TokenP(Expression *e) {
+  if (expr::TokenExpr::is_instance<tt>(e)) {
+    return vp(AS_TOK(e)->token.value);
+  }
+  return false;
+}
+
+struct StackElement {
+  /**
+   * How many expressions to expect.
+   */
+  enum { MANDATORY, OPTIONAL, ONE_OR_MORE } qualifier;
+  /**
+   * Which conditions the expressions need to satisfy.
+   */
+  expr::Predicate predicate;
+  /**
+   * Where to anchor matching expressions.
+   */
+  std::vector<Expression *> *expr_into = nullptr;
+  /**
+   * Where to store the token value, if any. Use only with token expressions.
+   */
+  std::string *value_into = nullptr;
+  bool matches(ParseStack::reverse_iterator &it) {
+    switch (qualifier) {
+    case MANDATORY:
+      return matches_one(it);
+    case OPTIONAL:
+      return matches_optional(it);
+    default:
+      throw std::logic_error{"illegal 'qualifier' enum value: " +
+                             std::to_string(qualifier)};
+    }
+  }
+
+private:
+  void store_expr(Expression *e) {
+    if (expr_into != nullptr) {
+      expr_into->push_back(e);
+    }
+    if (value_into != nullptr) {
+      *value_into = getval(e);
+    }
+  }
+  bool matches_one(ParseStack::reverse_iterator &it) {
+    if (predicate(*it)) {
+      store_expr(*it);
+      ++it;
+      return true;
+    } else {
+      return false;
+    }
+  }
+  bool matches_optional(ParseStack::reverse_iterator &it) {
+    if (predicate(*it)) {
+      if (predicate(*it)) {
+        store_expr(*it);
+      }
+      ++it;
+    }
+    return true;
+  }
+  bool matches_one_or_more(ParseStack::reverse_iterator &it) {
+    if (!predicate(*it)) {
+      return false;
+    }
+
+    while (predicate(*it)) {
+      store_expr(*it);
+      ++it;
+    }
+    return true;
+  }
+};
+
+class StackState {
+  using Self = StackState &;
+
+public:
+  bool matches(ParseStack &s);
+  StackState(std::vector<StackElement> &&elems) : elements{elems} {}
+
+private:
+  std::vector<StackElement> elements;
+};
+
+bool StackState::matches(ParseStack &s) {
+  // Need to traverse both stack and elements back to front.
+  auto stack_it = s.rbegin();
+  for (auto el_it = elements.rbegin(); el_it != elements.rend(); el_it++) {
+    if (stack_it == s.rend()) {
+      return false;
+    }
+    if (el_it->matches(stack_it)) {
+      continue;
+    } else {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool ToStmtList::perform(Token, ParseStack &s) {
@@ -78,6 +188,8 @@ bool ToStmtList::perform(Token, ParseStack &s) {
   return true;
 }
 
+ToStmtList::~ToStmtList() { delete state; }
+
 bool ToGraph::perform(Token lookahead, ParseStack &s) {
   if (lookahead.type != TokenType::EOI) {
     /*
@@ -87,79 +199,65 @@ bool ToGraph::perform(Token lookahead, ParseStack &s) {
     return false;
   }
 
-  /*
-   * Expected stack content:
-   * [strict] (graph|digraph) [ID] '{' stmt_list '}'
-   */
-  std::string name = "";
-  expr::StmtList *stmtList = nullptr;
-
-  // FIXME: working front to back is probably easier to write and follow
-
-  Expression *e;
-  int idx = s.size() - 1;
-  if (idx < 3) {
-    return false;
-  }
-
-  e = s.at(idx);
-  if (!is_tkn<TokenType::CLOSING_BRACE>(e)) {
-    return false;
-  }
-
-  idx--;
-  e = s.at(idx);
-  if (!expr::StmtList::is_instance(e)) {
-    return false;
-  }
-
-  idx--;
-  e = s.at(idx);
-  if (!is_tkn<TokenType::OPENING_BRACE>(e)) {
-    return false;
-  }
-
-  idx--;
-  e = s.at(idx);
-  if (is_tkn<TokenType::NAME>(e)) {
-    name = getval(AS_TOK(e));
-    if (idx == 0) {
-      return false;
+  if (state->matches(s)) {
+    // Some expressions will be inaccessible afterwards, so delete them
+    for (auto ex : s) {
+      // We still need the statements!
+      if (ex != stmtList.front()) {
+        delete ex;
+      }
     }
-    idx--;
-    e = s.at(idx);
-  }
 
-  if (is_tkn<TokenType::KEYWORD>(e)) {
-    if (getval(AS_TOK(e)) != "graph") {
-      return false;
-    }
+    /*
+     * FIXME: We just assume that the graph occupies the entire stack. Otherwise
+     * we have malformed input. We ignore that possibility for now.
+     */
+    s.clear();
+    s.push_back(new expr::FullGraph(
+        name, static_cast<expr::StmtList *>(stmtList.front())));
+    return true;
   } else {
     return false;
   }
-
-  if (idx > 1) {
-    return false;
-  } else if (idx == 1) {
-    if (!is_tkn<TokenType::KEYWORD>(s[0]) || getval(AS_TOK(e)) != "strict") {
-      return false;
-    }
-  }
-
-  // We can finally reduce
-
-  // Some expressions will be inaccessible afterwards, so delete them
-  for (auto ex : s) {
-    // We still need the statements!
-    if (ex != stmtList) {
-      delete ex;
-    }
-  }
-
-  s.clear();
-  s.push_back(new expr::FullGraph(name, stmtList));
-
-  return true;
 }
+
+ToGraph::ToGraph() {
+  state = new StackState{{
+      StackElement{
+          StackElement::OPTIONAL,
+          TokenP<TokenType::KEYWORD, kw_strict>,
+      },
+      StackElement{
+          StackElement::MANDATORY,
+          TokenP<TokenType::KEYWORD, kw_graph>,
+      },
+      StackElement{
+          StackElement::OPTIONAL,
+          TokenP<TokenType::NAME, any_value>,
+          nullptr,
+          &name,
+      },
+      StackElement{
+          StackElement::MANDATORY,
+          TokenP<TokenType::OPENING_BRACE>,
+      },
+      StackElement{
+          StackElement::MANDATORY,
+          expr::StmtList::is_instance,
+          &stmtList,
+      },
+      StackElement{
+          StackElement::MANDATORY,
+          TokenP<TokenType::CLOSING_BRACE>,
+      },
+  }};
+}
+
+void ToGraph::reset() {
+  name = "";
+  stmtList.clear();
+}
+
+ToGraph::~ToGraph() { delete state; }
 
 } // namespace graphd::input::reduce
