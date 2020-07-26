@@ -24,7 +24,7 @@ bool Parser::shift() {
     return false;
   }
 
-  stack.push_back(new expr::TokenExpr(lookahead));
+  stack.push_back(new expr::TokenExpr{lookahead});
   Token lookahead = tok.next_token();
   return true;
 }
@@ -46,7 +46,7 @@ Parser Parser::of(std::istream &in) {
 }
 
 Parser::Parser(Tokenizer tokenizer, Token lookahead)
-    : tok{tokenizer}, lookahead{lookahead}, stack{} {
+    : stack{}, lookahead{lookahead}, tok{tokenizer} {
   this->reductions =
       std::vector<Reduction *>{new reduce::ToGraph, new reduce::ToStmtList};
 }

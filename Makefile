@@ -15,17 +15,22 @@ GINC = include/graphd
 $(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
 	$(CXX) -c $(CXXFLAGS) $(OPT) $^ -o $@
 
-test: toktest
+test: toktest partest
 
 clean:
 	rm -f $(OBJ)/* $(TBIN)/*
 
-toktest: $(TBIN)/tokenizer_test
+toktest: $(TBIN)/token_test
 	$<
 
-$(TBIN)/tokenizer_test: $(TSRC)/tokenizer_test.cpp $(OBJ)/token.o | $(TBIN)
+partest: $(TBIN)/parse_test
+	$<
+
+$(TBIN)/token_test: $(TSRC)/token_test.cpp $(OBJ)/token.o | $(TBIN)
 	$(CXX) $(CXXFLAGS) $(TESTLIBS) $^ -o $@
 
+$(TBIN)/parse_test: $(TSRC)/parse_test.cpp $(OBJ)/parse.o $(OBJ)/reduce.o $(OBJ)/expr.o $(OBJ)/token.o | $(TBIN)
+	$(CXX) $(CXXFLAGS) $(TESTLIBS) $^ -o $@
 
 # Create directories
 

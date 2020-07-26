@@ -9,15 +9,11 @@ typedef bool (*Predicate)(Expression *);
 
 class TokenExpr : public Expression {
 public:
-  virtual ExprType type() override { return ExprType::TOKEN_EXPR; }
-  virtual void apply_to_graph(Graph &g) override {
-    throw std::logic_error{"attempting to apply token expression to graph"};
-  }
+  virtual ExprType type() override;
+  virtual void apply_to_graph(Graph &g) override;
   virtual ~TokenExpr() = default;
 
-  static bool is_instance(Expression *e) {
-    return e->type() == ExprType::TOKEN_EXPR;
-  }
+  static bool is_instance(Expression *e);
   template <TokenType tt> static bool is_instance(Expression *e) {
     if (e->type() != ExprType::TOKEN_EXPR) {
       return false;
@@ -25,53 +21,38 @@ public:
     TokenExpr *asTok = static_cast<TokenExpr *>(e);
     return asTok->token.type == tt;
   }
+  TokenExpr(Token t);
 
   Token token;
-  TokenExpr(Token t) : token{t} {}
 };
 
 class Statement : public Expression {
 public:
-  static bool is_instance(Expression *e) {
-    switch (e->type()) {
-    // NOTE: other statement types currently unsupported
-    case ExprType::EDGE_STATEMENT:
-      return true;
-    default:
-      return false;
-    }
-  }
+  static bool is_instance(Expression *e);
   virtual ~Statement() = default;
 };
 
 class EdgeStmt : public Statement {
 public:
-  virtual ExprType type() override { return ExprType::EDGE_STATEMENT; }
-  virtual void apply_to_graph(Graph &g) override {
-    // TODO
-  }
+  virtual ExprType type() override;
+  virtual void apply_to_graph(Graph &g) override;
   virtual ~EdgeStmt() = default;
+  EdgeStmt(std::string n1name, std::string n2name);
+
+private:
+  std::string node1_name;
+  std::string node2_name;
 };
 
 class StmtList : public Expression {
 public:
-  virtual ExprType type() override { return ExprType::STATEMENT_LIST; }
-  virtual void apply_to_graph(Graph &g) override {
-    for (auto s : statements) {
-      s->apply_to_graph(g);
-    }
-  }
-  virtual ~StmtList() {
-    for (auto s : statements) {
-      delete s;
-    }
-  }
+  virtual ExprType type() override;
+  virtual void apply_to_graph(Graph &g) override;
+  virtual ~StmtList();
+  StmtList();
+  void add_statement(Statement *s);
 
-  static bool is_instance(Expression *e) {
-    return e->type() == ExprType::STATEMENT_LIST;
-  }
-  StmtList() : statements{} {}
-  void add_statement(Statement *s) { statements.push_back(s); }
+  static bool is_instance(Expression *e);
 
 private:
   std::vector<Statement *> statements;
@@ -80,19 +61,15 @@ private:
 class FullGraph : public Expression {
 public:
   virtual ExprType type() override { return ExprType::GRAPH; }
-  virtual void apply_to_graph(Graph &g) override {
-    // TODO
-  }
+  virtual void apply_to_graph(Graph &g) override;
   virtual ~FullGraph() { delete stmtList; }
+  FullGraph(std::string name, StmtList *stmtList);
 
-  static bool is_instance(Expression *e) {
-    return e->type() == ExprType::GRAPH;
-  }
+  static bool is_instance(Expression *e);
 
+private:
   std::string name;
   StmtList *stmtList;
-  FullGraph(std::string name, StmtList *stmtList)
-      : name{name}, stmtList{stmtList} {}
 };
 } // namespace graphd::input::expr
 

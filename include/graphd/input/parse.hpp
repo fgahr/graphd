@@ -41,9 +41,17 @@ public:
 typedef std::vector<Expression *> ParseStack;
 
 /**
- * A reduction to be performed on the parse stack.
+ * A reduction to be performed on a parse stack.
  */
-class Reduction;
+class Reduction {
+public:
+  /**
+   * Returns true if it succeeded, false otherwise.
+   * When false is returned, the stack must not be altered.
+   */
+  virtual bool perform(Token lookahead, ParseStack &s) = 0;
+  virtual ~Reduction() = default;
+};
 
 /**
  * A simple shift-reduce-type parser without a parsing table, completely

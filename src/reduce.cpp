@@ -11,7 +11,7 @@ template <TokenType tt> bool is_tkn(Expression *e) {
 }
 
 static std::string getval(Expression *e) {
-  if (expr::TokenExpr::is_instance(e)) {
+  if (!expr::TokenExpr::is_instance(e)) {
     throw std::logic_error{"mistakenly encountered non-token expression"};
   }
   return AS_TOK(e)->token.value;
@@ -54,6 +54,8 @@ struct ExprPattern {
       return matches_one(it);
     case OPTIONAL:
       return matches_optional(it);
+    case ONE_OR_MORE:
+      return matches_one_or_more(it);
     default:
       throw std::logic_error{"illegal 'qualifier' enum value: " +
                              std::to_string(qualifier)};
@@ -180,8 +182,10 @@ bool ToStatement::perform(Token, ParseStack &s) {
   if (pattern->matches(s)) {
     for (auto ex : deletable) {
       delete ex;
+      s.pop_back();
     }
 
+    s.push_back(new expr::EdgeStmt{n1name, n2name});
     return true;
   }
   return false;

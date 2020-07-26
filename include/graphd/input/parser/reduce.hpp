@@ -5,18 +5,6 @@
 #include <graphd/input/parser/expr.hpp>
 
 namespace graphd::input::reduce {
-/**
- * A reduction to be performed on a parse stack.
- */
-class Reduction {
-public:
-  /**
-   * Returns true if it succeeded, false otherwise.
-   * When false is returned, the stack must not be altered.
-   */
-  virtual bool perform(Token lookahead, ParseStack &s) = 0;
-  virtual ~Reduction() = default;
-};
 
 class StackPattern;
 
