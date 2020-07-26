@@ -23,6 +23,12 @@ void add_tokens(ParseStack &s, std::string code) {
   }
 }
 
+void cleanup(ParseStack &s) {
+  for (auto e : s) {
+    delete e;
+  }
+}
+
 TEST(ReductionSuccess, statement) {
   reduce::ToStatement toStmt;
   ParseStack stack;
@@ -31,6 +37,8 @@ TEST(ReductionSuccess, statement) {
   EXPECT_TRUE(toStmt.perform(eoi, stack));
   EXPECT_EQ(stack.size(), 4);
   EXPECT_TRUE(expr::Statement::is_instance(stack.back()));
+
+  cleanup(stack);
 }
 
 TEST(ReductionFail, statement) {
@@ -41,6 +49,8 @@ TEST(ReductionFail, statement) {
   auto pre_size = stack.size();
   EXPECT_FALSE(toStmt.perform(eoi, stack));
   EXPECT_EQ(stack.size(), pre_size);
+
+  cleanup(stack);
 }
 
 TEST(ReductionSuccess, stmtListNew) {
@@ -53,6 +63,8 @@ TEST(ReductionSuccess, stmtListNew) {
   EXPECT_TRUE(toList.perform(clb, stack));
   EXPECT_EQ(stack.size(), 4);
   EXPECT_TRUE(expr::StmtList::is_instance(stack.back()));
+
+  cleanup(stack);
 }
 
 TEST(ReductionSuccess, stmtListExists) {
@@ -66,6 +78,8 @@ TEST(ReductionSuccess, stmtListExists) {
   EXPECT_TRUE(toList.perform(clb, stack));
   EXPECT_EQ(stack.size(), 1);
   EXPECT_TRUE(expr::StmtList::is_instance(stack.back()));
+
+  cleanup(stack);
 }
 
 TEST(ReductionFail, stmtList) {
@@ -76,6 +90,8 @@ TEST(ReductionFail, stmtList) {
   auto pre_size = stack.size();
   EXPECT_FALSE(toList.perform(eoi, stack));
   EXPECT_EQ(stack.size(), pre_size);
+
+  cleanup(stack);
 }
 
 TEST(ReductionSuccess, graph) {
@@ -88,6 +104,8 @@ TEST(ReductionSuccess, graph) {
   EXPECT_TRUE(toGraph.perform(eoi, stack));
   EXPECT_EQ(stack.size(), 1);
   EXPECT_TRUE(expr::FullGraph::is_instance(stack.back()));
+
+  cleanup(stack);
 }
 
 TEST(ReductionFail, graphNoEOI) {
@@ -100,6 +118,8 @@ TEST(ReductionFail, graphNoEOI) {
   auto pre_size = stack.size();
   EXPECT_FALSE(toGraph.perform(smc, stack));
   EXPECT_EQ(stack.size(), pre_size);
+
+  cleanup(stack);
 }
 
 TEST(ReductionFail, graphNoGraph) {
@@ -110,4 +130,6 @@ TEST(ReductionFail, graphNoGraph) {
   auto pre_size = stack.size();
   EXPECT_FALSE(toGraph.perform(eoi, stack));
   EXPECT_EQ(stack.size(), pre_size);
+
+  cleanup(stack);
 }
