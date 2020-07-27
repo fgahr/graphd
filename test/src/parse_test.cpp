@@ -170,21 +170,43 @@ TEST(ParseSuccess, fullGraph) {
 }
 
 TEST(ParseFail, illegalToken) {
-  std::istringstream in{"strict digraph mygraph {\n"
-                        "    1 -> 2;\n"
-                        "    3 -> 1;\n"
-                        "    2 -> 3;\n"
-                        "}\n\t"};
-  auto p = Parser::of(in);
+  {
+    std::istringstream in{"strict digraph mygraph {\n"
+                          "    1 -> 2;\n"
+                          "    3 -> 1;\n"
+                          "    2 -> 3;\n"
+                          "}\n\t"};
+    auto p = Parser::of(in);
 
-  Expression *ex = nullptr;
-  try {
-    ex = p.parse();
-    ASSERT_TRUE(false);
-  } catch (const std::exception &e) {
-    std::string msg = e.what();
-    // Message contains the first illegal token?
-    ASSERT_NE(msg.find("digraph"), std::string::npos);
+    Expression *ex = nullptr;
+    try {
+      ex = p.parse();
+      ASSERT_TRUE(false);
+    } catch (const std::exception &e) {
+      std::string msg = e.what();
+      // Message contains the first illegal token?
+      ASSERT_NE(msg.find("digraph"), std::string::npos);
+    }
+    delete ex;
   }
-  delete ex;
+
+  {
+    std::istringstream in{"strict graph mygraph {\n"
+                          "    1 -> 2;\n"
+                          "    3 -> 1;\n"
+                          "    2 -> 3;\n"
+                          "}\n\t"};
+    auto p = Parser::of(in);
+
+    Expression *ex = nullptr;
+    try {
+      ex = p.parse();
+      ASSERT_TRUE(false);
+    } catch (const std::exception &e) {
+      std::string msg = e.what();
+      // Message contains the first illegal token?
+      ASSERT_NE(msg.find("->"), std::string::npos);
+    }
+    delete ex;
+  }
 }

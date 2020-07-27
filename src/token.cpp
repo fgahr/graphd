@@ -161,7 +161,9 @@ Token Tokenizer::next_token() {
       } else if (c == '-') {
         return Token{TokenType::UNDIRECTED_EDGE, ""};
       } else if (c == '>') {
-        return Token{TokenType::DIRECTED_EDGE, ""};
+        throw std::runtime_error{"unexpected token: -> (only undirected graphs "
+                                 "are supported at this time)"};
+        // return Token{TokenType::DIRECTED_EDGE, ""};
       } else {
         in.putback(c);
         return Token{TokenType::NUMERAL, "-" + read_numeral()};
