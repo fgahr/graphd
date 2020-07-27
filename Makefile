@@ -2,7 +2,6 @@
 
 PROGNAME = graphd
 
-CXX = clang++
 CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra -Wpedantic
 OPT = -O2
 TESTLIBS = -lgtest -lgtest_main
