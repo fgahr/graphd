@@ -24,9 +24,16 @@ static bool kw_strict(const std::string s) { return s == "strict"; }
 static bool kw_graph(const std::string s) { return s == "graph"; }
 
 template <TokenType tt, ValuePredicate vp = any_value>
-bool TokenP(Expression *e) {
+bool token_p(Expression *e) {
   if (expr::TokenExpr::is_instance<tt>(e)) {
     return vp(AS_TOK(e)->token.value);
+  }
+  return false;
+}
+
+bool identifier_token(Expression *e) {
+  if (expr::TokenExpr::is_instance(e)) {
+    return AS_TOK(e)->token.is_identifier();
   }
   return false;
 }
@@ -199,10 +206,10 @@ void ToStatement::reset() {
 
 ToStatement::ToStatement() {
   pattern = StackPatternBuilder::get()
-                .one(TokenP<TokenType::NAME>, &deletable, &n1name)
-                .one(TokenP<TokenType::UNDIRECTED_EDGE>, &deletable)
-                .one(TokenP<TokenType::NAME>, &deletable, &n2name)
-                .one(TokenP<TokenType::SEMICOLON>, &deletable)
+                .one(identifier_token, &deletable, &n1name)
+                .one(token_p<TokenType::UNDIRECTED_EDGE>, &deletable)
+                .one(identifier_token, &deletable, &n2name)
+                .one(token_p<TokenType::SEMICOLON>, &deletable)
                 // TODO: Add attribute (list)
                 .build();
 }
@@ -286,12 +293,12 @@ void ToGraph::reset() {
 
 ToGraph::ToGraph() {
   pattern = StackPatternBuilder::get()
-                .optional(TokenP<TokenType::KEYWORD, kw_strict>)
-                .one(TokenP<TokenType::KEYWORD, kw_graph>)
-                .optional(TokenP<TokenType::NAME, any_value>, nullptr, &name)
-                .one(TokenP<TokenType::OPENING_BRACE>)
+                .optional(token_p<TokenType::KEYWORD, kw_strict>)
+                .one(token_p<TokenType::KEYWORD, kw_graph>)
+                .optional(token_p<TokenType::NAME, any_value>, nullptr, &name)
+                .one(token_p<TokenType::OPENING_BRACE>)
                 .one(expr::StmtList::is_instance, &stmtList)
-                .one(TokenP<TokenType::CLOSING_BRACE>)
+                .one(token_p<TokenType::CLOSING_BRACE>)
                 .build();
 }
 

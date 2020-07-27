@@ -39,7 +39,7 @@ static bool is_keyword(std::string s) {
 }
 
 namespace graphd::input {
-bool Token::isIdentifier() {
+bool Token::is_identifier() {
   switch (this->type) {
   case TokenType::NAME:
   case TokenType::NUMERAL:

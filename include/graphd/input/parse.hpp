@@ -47,7 +47,7 @@ class Reduction {
 public:
   /**
    * Returns true if it succeeded, false otherwise.
-   * When false is returned, the stack must not be altered.
+   * When false is returned, the stack was not altered.
    */
   virtual bool perform(Token lookahead, ParseStack &s) = 0;
   virtual ~Reduction() = default;
@@ -64,13 +64,14 @@ public:
   ~Parser();
 
 private:
-  Parser(Tokenizer tokenizer, Token lookahead);
+  Parser(Tokenizer tokenizer, Token first_token,
+         std::vector<Reduction *> reductions);
   bool shift();
   bool reduce();
-  std::vector<Reduction *> reductions;
   ParseStack stack;
   Token lookahead;
   Tokenizer tok;
+  std::vector<Reduction *> reductions;
 };
 } // namespace graphd::input
 

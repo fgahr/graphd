@@ -2,6 +2,8 @@
 #include <graphd/input/parser/expr.hpp>
 #include <graphd/input/parser/reduce.hpp>
 
+#include <utility>
+
 namespace graphd::input {
 
 Expression *Parser::parse() {
@@ -13,10 +15,14 @@ Expression *Parser::parse() {
 
   if (stack.size() != 1) {
     throw std::runtime_error{
-        "input must contain exactly one full graph definition"};
+        "input must contain exactly one full graph definition;"
+        "instead stack contained " +
+        std::to_string(stack.size()) + " expressions"};
   }
 
-  return stack.at(0);
+  Expression *ret = stack.front();
+  stack.clear();
+  return ret;
 }
 
 bool Parser::shift() {
@@ -25,7 +31,7 @@ bool Parser::shift() {
   }
 
   stack.push_back(new expr::TokenExpr{lookahead});
-  Token lookahead = tok.next_token();
+  lookahead = tok.next_token();
   return true;
 }
 
@@ -42,18 +48,22 @@ bool Parser::reduce() {
 Parser Parser::of(std::istream &in) {
   Tokenizer tok{in};
   Token next = tok.next_token();
-  return Parser{tok, next};
+  auto reductions = std::vector<Reduction *>{
+      new reduce::ToStatement, new reduce::ToStmtList, new reduce::ToGraph};
+  return Parser{tok, next, reductions};
 }
 
-Parser::Parser(Tokenizer tokenizer, Token lookahead)
-    : stack{}, lookahead{lookahead}, tok{tokenizer} {
-  this->reductions =
-      std::vector<Reduction *>{new reduce::ToGraph, new reduce::ToStmtList};
-}
+Parser::Parser(Tokenizer tokenizer, Token first_token,
+               std::vector<Reduction *> reductions)
+    : stack{}, lookahead{first_token}, tok{tokenizer}, reductions{reductions} {}
 
 Parser::~Parser() {
   for (auto red : reductions) {
     delete red;
+  }
+
+  for (auto ex : stack) {
+    delete ex;
   }
 }
 

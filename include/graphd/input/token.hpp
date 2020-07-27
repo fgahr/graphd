@@ -30,7 +30,7 @@ struct Token {
   /**
    * Whether this token can represent an identifier.
    */
-  bool isIdentifier();
+  bool is_identifier();
 };
 
 class Tokenizer {
