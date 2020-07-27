@@ -52,6 +52,7 @@ private:
   void reset();
   std::string name;
   std::vector<Expression *> stmtList;
+  std::vector<Expression *> deletable;
   StackPattern *pattern;
 };
 

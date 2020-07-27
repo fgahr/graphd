@@ -15,6 +15,7 @@ void usage(std::string progname) {
 int run(std::istream &in, int argc, char **argv) {
   if (optind > argc - 2) {
     usage(argv[0]);
+    return EXIT_FAILURE;
   }
 
   graphd::NodeName from_node = argv[optind];

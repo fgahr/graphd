@@ -89,9 +89,7 @@ private:
   }
   bool matches_optional(ParseStack::reverse_iterator &it) {
     if (predicate(*it)) {
-      if (predicate(*it)) {
-        store_expr(*it);
-      }
+      store_expr(*it);
       ++it;
     }
     return true;
@@ -256,6 +254,7 @@ ToStmtList::ToStmtList() {
 ToStmtList::~ToStmtList() { delete pattern; }
 
 bool ToGraph::perform(Token lookahead, ParseStack &s) {
+  deletable.clear();
   if (lookahead.type != TokenType::EOI) {
     /*
      * Either we're not yet at the end of the graph or the input was
@@ -266,11 +265,8 @@ bool ToGraph::perform(Token lookahead, ParseStack &s) {
 
   if (pattern->matches(s)) {
     // Some expressions will be inaccessible, delete what we don't need.
-    for (auto ex : s) {
-      // We still need the statements!
-      if (ex != stmtList.front()) {
-        delete ex;
-      }
+    for (auto ex : deletable) {
+      delete ex;
     }
 
     /*
@@ -292,14 +288,15 @@ void ToGraph::reset() {
 }
 
 ToGraph::ToGraph() {
-  pattern = StackPatternBuilder::get()
-                .optional(token_p<TokenType::KEYWORD, kw_strict>)
-                .one(token_p<TokenType::KEYWORD, kw_graph>)
-                .optional(token_p<TokenType::NAME, any_value>, nullptr, &name)
-                .one(token_p<TokenType::OPENING_BRACE>)
-                .one(expr::StmtList::is_instance, &stmtList)
-                .one(token_p<TokenType::CLOSING_BRACE>)
-                .build();
+  pattern =
+      StackPatternBuilder::get()
+          .optional(token_p<TokenType::KEYWORD, kw_strict>, &deletable)
+          .one(token_p<TokenType::KEYWORD, kw_graph>, &deletable)
+          .optional(token_p<TokenType::NAME, any_value>, &deletable, &name)
+          .one(token_p<TokenType::OPENING_BRACE>, &deletable)
+          .one(expr::StmtList::is_instance, &stmtList)
+          .one(token_p<TokenType::CLOSING_BRACE>, &deletable)
+          .build();
 }
 
 ToGraph::~ToGraph() { delete pattern; }

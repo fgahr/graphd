@@ -31,6 +31,6 @@ private:
   std::string name;
   std::unordered_map<NodeName, Node> nodes;
 };
-}; // namespace graphd
+} // namespace graphd
 
 #endif // _GRAPHD_GRAPH_H_
