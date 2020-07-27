@@ -15,9 +15,7 @@ Expression *Parser::parse() {
 
   if (stack.size() != 1) {
     throw std::runtime_error{
-        "input must contain exactly one full graph definition;"
-        "instead stack contained " +
-        std::to_string(stack.size()) + " expressions"};
+        "input must contain exactly one full graph definition"};
   }
 
   Expression *ret = stack.front();

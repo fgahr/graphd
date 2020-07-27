@@ -42,6 +42,7 @@ public:
 private:
   std::string node1_name;
   std::string node2_name;
+  double distance = 1.0;
 };
 
 class StmtList : public Expression {

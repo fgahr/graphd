@@ -29,8 +29,8 @@ EdgeStmt::EdgeStmt(std::string n1name, std::string n2name)
 
 ExprType EdgeStmt::type() { return ExprType::EDGE_STATEMENT; }
 
-void EdgeStmt::apply_to_graph(Graph &) {
-  // TODO
+void EdgeStmt::apply_to_graph(Graph &g) {
+  g.add_edge(node1_name, node2_name, distance);
 }
 
 StmtList::StmtList() : statements{} {}
