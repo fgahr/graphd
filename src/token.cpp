@@ -59,14 +59,14 @@ std::string Tokenizer::read_string() {
     int c = in.get();
     switch (c) {
     case EOF:
-      throw std::runtime_error{"error: encountered EOF while parsing string"};
+      throw std::runtime_error{"encountered EOF while parsing string"};
     case '\\':
       buffer << (char)in.get();
       continue;
     case '"':
       str = buffer.str();
       if (str.empty()) {
-        throw std::runtime_error{"error: empty string"};
+        throw std::runtime_error{"empty string"};
       }
       return str;
     default:
