@@ -4,6 +4,20 @@
 
 using namespace graphd;
 
+TEST(Graph, fail_negative_edge_weight) {
+  Graph g;
+
+  EXPECT_ANY_THROW(g.add_edge("1", "2", -2.0));
+}
+
+TEST(Graph, fail_no_such_node) {
+  Graph g;
+
+  g.add_edge("node_one", "node_two", 3.0);
+
+  EXPECT_ANY_THROW(g.shortest_path("node_one", "node_three"));
+}
+
 TEST(Graph, shortest_same) {
   Graph g;
 
