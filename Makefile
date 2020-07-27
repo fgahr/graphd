@@ -1,41 +1,43 @@
 .PHONY: test clean
 
+PROGNAME = graphd
+
 CXX = clang++
 CXXFLAGS = -std=c++17 -Iinclude -Wall -Wextra -Wpedantic
 OPT = -O2
 TESTLIBS = -lgtest -lgtest_main
 
 SRC = src
+INC = include
 BIN = bin
-OBJ = bin/obj
+OBJ = obj
 TSRC = test/src
 TBIN = test/bin
-GINC = include/graphd
 
-$(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
-	$(CXX) -c $(CXXFLAGS) $(OPT) $^ -o $@
+all: $(BIN)/$(PROGNAME)
+
+vpath %.cpp $(SRC)
+vpath %.hpp $(INC)/graphd:$(INC)/graphd/input:$(INC)/graphd/input/parser
+
+# TODO: Generate from list of source files
+ALLOBJS = $(OBJ)/parse.o $(OBJ)/reduce.o $(OBJ)/expr.o $(OBJ)/token.o $(OBJ)/graph.o
+
+$(BIN)/$(PROGNAME): main.cpp $(ALLOBJS) | $(BIN)
+	$(CXX) $(CXXFLAGS) $(OPT) $^ -o $@
+
+$(OBJ)/%.o: %.cpp %.hpp | $(OBJ)
+	$(CXX) -c $(CXXFLAGS) $(OPT) $< -o $@
 
 test: token_test parse_test graph_test
 
 clean:
-	rm -f $(OBJ)/* $(TBIN)/*
+	rm -f $(BIN)/* $(OBJ)/* $(TBIN)/*
 
 %_test: $(TBIN)/%_test
 	$<
 
-$(TBIN)/token_test: $(TSRC)/token_test.cpp $(OBJ)/token.o | $(TBIN)
+$(TBIN)/%_test: $(TSRC)/%_test.cpp $(ALLOBJS) | $(TBIN)
 	$(CXX) $(CXXFLAGS) $(TESTLIBS) $^ -o $@
 
-$(TBIN)/parse_test: $(TSRC)/parse_test.cpp $(OBJ)/parse.o $(OBJ)/reduce.o $(OBJ)/expr.o $(OBJ)/token.o | $(TBIN)
-	$(CXX) $(CXXFLAGS) $(TESTLIBS) $^ -o $@
-
-$(TBIN)/graph_test: $(TSRC)/graph_test.cpp $(OBJ)/graph.o | $(TBIN)
-	$(CXX) $(CXXFLAGS) $(TESTLIBS) $^ -o $@
-
-# Create directories
-
-$(TBIN):
-	mkdir -p $@
-
-$(OBJ):
+$(BIN) $(TBIN) $(OBJ):
 	mkdir -p $@
