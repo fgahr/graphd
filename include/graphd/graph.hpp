@@ -10,9 +10,7 @@ using NodeName = std::string;
 using DistMap = std::unordered_map<NodeName, double>;
 
 struct Node {
-  NodeName name;
   DistMap neighbors;
-  Node(NodeName name);
   void add_neighbor(NodeName n, double edge_weight);
 };
 
@@ -28,12 +26,10 @@ public:
   void add_edge(NodeName n1, NodeName n2, double distance = 1.0);
 
 private:
-  void dijkstra(NodeName from, NodeName to);
-  Path follow_shortest_path(NodeName from, NodeName to);
+  Path dijkstra(NodeName from, NodeName to);
   // NOTE: Might well be useless for now.
   std::string name;
   std::unordered_map<NodeName, Node> nodes;
-  DistMap distances;
 };
 }; // namespace graphd
 

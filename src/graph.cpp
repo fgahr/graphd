@@ -6,8 +6,6 @@
 
 namespace graphd {
 
-Node::Node(NodeName n) : name{n} {}
-
 // NOTE: map.contains() not available in C++17
 template <typename K, typename V>
 static bool contains(std::unordered_map<K, V> &map, K key) {
@@ -33,68 +31,59 @@ void Node::add_neighbor(NodeName n, double distance) {
   keep_shortest(neighbors, n, distance);
 }
 
-void Graph::dijkstra(NodeName from, NodeName to) {
-  DistMap next_step;
+Path Graph::dijkstra(NodeName start, NodeName end) {
+  DistMap distances = {{start, 0.0}};
+  std::unordered_map<NodeName, NodeName> coming_from;
 
-  while (!contains(distances, to)) {
-    double shortest_next = std::numeric_limits<double>::max();
+  DistMap next_step_candidates;
+
+  while (!contains(distances, end)) {
+    next_step_candidates.clear();
+    double shortest_next_distance = std::numeric_limits<double>::max();
+    // Which node to add in this step, connecting from prev
     NodeName next = "";
-    next_step.clear();
-    for (auto [n, dist] : distances) {
-      for (auto [neigh, ndist] : nodes[n].neighbors) {
-        if (contains(distances, neigh)) {
+    NodeName prev = "";
+
+    // Explore options for the next step
+    for (auto [node, node_dist] : distances) {
+      for (auto [neighbor, dist_from_node] : nodes[node].neighbors) {
+        if (contains(distances, neighbor)) {
+          // already mapped
           continue;
         }
 
-        double d = keep_shortest(next_step, neigh, dist + ndist);
-        if (d < shortest_next) {
-          shortest_next = d;
-          next = neigh;
+        // Add to candidates
+        double d = keep_shortest(next_step_candidates, neighbor,
+                                 node_dist + dist_from_node);
+        if (d < shortest_next_distance) {
+          shortest_next_distance = d;
+          next = neighbor;
+          prev = node;
         }
       }
     }
 
     if (next == "") {
-      throw std::runtime_error{"nodes not connected: " + a + ", " + b};
+      throw std::runtime_error{"nodes not connected: " + start + ", " + end};
     }
-    distances[next] = shortest_next;
-  }
-}
 
-Path Graph::follow_shortest_path(NodeName from, NodeName to) {
-  // We start from the end of the path and work our way back.
-  // This means  we are gathering hops back to front and need to reverse the
-  // list later.
-  NodeName current_hop = to;
+    distances[next] = shortest_next_distance;
+    coming_from[next] = prev;
+  }
+
+  // Trace the path backwards from end to start, building the path in reverse.
   std::vector<NodeName> hops;
-
-  while (current_hop != from) {
-    hops.push_back(current_hop);
-
-    NodeName next_hop = "";
-    double dist = std::numeric_limits<double>::max();
-
-    for (auto [neigh, _] : nodes[current_hop].neighbors) {
-      if (contains(distances, neigh) && distances[neigh] < dist) {
-        next_hop = neigh;
-        dist = distances[neigh];
-      }
-    }
-
-    if (next_hop == "") {
-      throw std::logic_error{"unable to reconstruct shortest path"};
-    }
-    current_hop = next_hop;
+  for (NodeName n = end; n != start; n = coming_from[n]) {
+    hops.push_back(n);
   }
-  hops.push_back(from);
+  hops.push_back(start);
 
   std::reverse(hops.begin(), hops.end());
 
-  return Path{distances[to], hops};
+  return Path{distances[end], hops};
 }
 
 Path Graph::shortest_path(NodeName from, NodeName to) {
-  distances.clear();
   if (!contains(nodes, from)) {
     throw std::runtime_error{"no such node: " + from};
   }
@@ -102,13 +91,7 @@ Path Graph::shortest_path(NodeName from, NodeName to) {
     throw std::runtime_error{"no such node: " + to};
   }
 
-  if (from == to) {
-    return Path{0.0, {from}};
-  }
-
-  DistMap distances = {{from, 0.0}};
-  dijkstra(from, to);
-  return follow_shortest_path(from, to);
+  return dijkstra(from, to);
 }
 
 void Graph::set_name(std::string name) { this->name = name; }
@@ -123,8 +106,8 @@ void Graph::add_edge(NodeName n1, NodeName n2, double weight) {
     return;
   }
 
-  nodes.try_emplace(n1, n1);
-  nodes.try_emplace(n2, n2);
+  nodes.try_emplace(n1);
+  nodes.try_emplace(n2);
 
   nodes[n1].add_neighbor(n2, weight);
   nodes[n2].add_neighbor(n1, weight);
