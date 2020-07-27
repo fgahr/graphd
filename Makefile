@@ -19,8 +19,7 @@ all: $(BIN)/$(PROGNAME)
 vpath %.cpp $(SRC)
 vpath %.hpp $(INC)/graphd:$(INC)/graphd/input:$(INC)/graphd/input/parser
 
-# TODO: Generate from list of source files
-ALLOBJS = $(OBJ)/parse.o $(OBJ)/reduce.o $(OBJ)/expr.o $(OBJ)/token.o $(OBJ)/graph.o
+ALLOBJS = $(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(wildcard $(SRC)/*.cpp))
 
 $(BIN)/$(PROGNAME): main.cpp $(ALLOBJS) | $(BIN)
 	$(CXX) $(CXXFLAGS) $(OPT) $^ -o $@
@@ -30,14 +29,14 @@ $(OBJ)/%.o: %.cpp %.hpp | $(OBJ)
 
 test: token_test parse_test graph_test
 
-clean:
-	rm -f $(BIN)/* $(OBJ)/* $(TBIN)/*
-
 %_test: $(TBIN)/%_test
 	$<
 
 $(TBIN)/%_test: $(TSRC)/%_test.cpp $(ALLOBJS) | $(TBIN)
 	$(CXX) $(CXXFLAGS) $(TESTLIBS) $^ -o $@
+
+clean:
+	rm -f $(BIN)/* $(OBJ)/* $(TBIN)/*
 
 $(BIN) $(TBIN) $(OBJ):
 	mkdir -p $@
