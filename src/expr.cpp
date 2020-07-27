@@ -59,7 +59,7 @@ FullGraph::FullGraph(std::string name, StmtList *stmtList)
     : name{name}, stmtList{stmtList} {}
 
 void FullGraph::apply_to_graph(Graph &g) {
-  // TODO: set name
+  g.set_name(name);
   stmtList->apply_to_graph(g);
 }
 

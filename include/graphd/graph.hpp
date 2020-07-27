@@ -2,24 +2,34 @@
 #define _GRAPHD_GRAPH_H_
 
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
+#include <vector>
 
 namespace graphd {
-class Node {
-  // TODO
+using NodeName = std::string;
+
+struct Node {
+  NodeName name;
+  std::unordered_map<NodeName, double> neighbors;
+  Node(NodeName name);
+  void add_neighbor(NodeName n, double edge_weight);
 };
 
-class Edge {
-  // TODO
+struct Path {
+  double total_weight;
+  std::vector<NodeName> nodes;
 };
 
 class Graph {
-  using Nname = std::string;
-
 public:
-  void add_edge(Nname n1, Nname n2, double weight = 1.0);
+  Path shortest_path_between(NodeName a, NodeName b);
+  void set_name(std::string name);
+  void add_edge(NodeName n1, NodeName n2, double weight = 1.0);
 
 private:
+  // NOTE: Might well be useless for now.
+  std::string name;
+  std::unordered_map<const NodeName, Node> nodes;
 };
 }; // namespace graphd
 
