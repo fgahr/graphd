@@ -1,4 +1,4 @@
-graph test {
+strict graph example {
     a -- b;
     b -- c;
     c -- d;

@@ -156,7 +156,7 @@ TEST(ReductionFail, graphNoGraph) {
 }
 
 TEST(ParseSuccess, fullGraph) {
-  std::istringstream in{"graph mygraph {\n"
+  std::istringstream in{"strict graph mygraph {\n"
                         "    1 -- 2;\n"
                         "    3 -- 1;\n"
                         "    2 -- 3;\n"

@@ -19,6 +19,9 @@ graph {
 $ bin/graphd -f test/input/small.dot 1 4
 total distance: 2
 1 -> 5 -> 4
+$ bin/graphd -f test/input/larger.dot a z
+total distance: 8
+a -> g -> f -> p -> o -> v -> u -> y -> z
 ```
 
 The currently supported subset of DOT is in fact so small, that a scanf-based

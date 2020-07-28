@@ -20,7 +20,7 @@ static std::string getval(Expression *e) {
 typedef bool (*ValuePredicate)(const std::string);
 
 static bool any_value(const std::string) { return true; }
-// static bool kw_strict(const std::string s) { return s == "strict"; }
+static bool kw_strict(const std::string s) { return s == "strict"; }
 static bool kw_graph(const std::string s) { return s == "graph"; }
 
 template <TokenType tt, ValuePredicate vp = any_value>
@@ -37,6 +37,19 @@ bool identifier_token(Expression *e) {
   }
   return false;
 }
+
+class StackWalker {
+public:
+  StackWalker(ParseStack &s) : stack{s} { idx = s.size() - 1; }
+  bool exhausted() { return idx < 0; }
+  bool has_next() { return idx >= 0; }
+  void shift() { idx--; }
+  Expression *get() { return stack.at(idx); }
+
+private:
+  const ParseStack &stack;
+  int idx;
+};
 
 struct ExprPattern {
   /**
@@ -55,14 +68,14 @@ struct ExprPattern {
    * Where to store the token value, if any. Use only with token expressions.
    */
   std::string *value_into = nullptr;
-  bool matches(ParseStack::reverse_iterator &it) {
+  bool matches(StackWalker &walker) {
     switch (qualifier) {
     case MANDATORY:
-      return matches_one(it);
+      return matches_one(walker);
     case OPTIONAL:
-      return matches_optional(it);
+      return matches_optional(walker);
     case ONE_OR_MORE:
-      return matches_one_or_more(it);
+      return matches_one_or_more(walker);
     default:
       throw std::logic_error{"illegal 'qualifier' enum value: " +
                              std::to_string(qualifier)};
@@ -78,30 +91,42 @@ private:
       *value_into = getval(e);
     }
   }
-  bool matches_one(ParseStack::reverse_iterator &it) {
-    if (predicate(*it)) {
-      store_expr(*it);
-      ++it;
+  bool matches_one(StackWalker &walker) {
+    if (walker.exhausted()) {
+      return false;
+    }
+
+    if (predicate(walker.get())) {
+      store_expr(walker.get());
+      walker.shift();
       return true;
     } else {
       return false;
     }
   }
-  bool matches_optional(ParseStack::reverse_iterator &it) {
-    if (predicate(*it)) {
-      store_expr(*it);
-      ++it;
+  bool matches_optional(StackWalker &walker) {
+    if (walker.exhausted()) {
+      return true;
+    }
+
+    if (predicate(walker.get())) {
+      store_expr(walker.get());
+      walker.shift();
     }
     return true;
   }
-  bool matches_one_or_more(ParseStack::reverse_iterator &it) {
-    if (!predicate(*it)) {
+  bool matches_one_or_more(StackWalker &walker) {
+    if (walker.exhausted()) {
       return false;
     }
 
-    while (predicate(*it)) {
-      store_expr(*it);
-      ++it;
+    if (!predicate(walker.get())) {
+      return false;
+    }
+
+    while (predicate(walker.get())) {
+      store_expr(walker.get());
+      walker.shift();
     }
     return true;
   }
@@ -120,13 +145,9 @@ private:
 };
 
 bool StackPattern::matches(ParseStack &s) {
-  // Need to traverse both stack and elements back to front.
-  auto stack_it = s.rbegin();
+  StackWalker walker{s};
   for (auto el_it = epats.rbegin(); el_it != epats.rend(); el_it++) {
-    if (stack_it == s.rend()) {
-      return false;
-    }
-    if (el_it->matches(stack_it)) {
+    if (el_it->matches(walker)) {
       continue;
     } else {
       return false;
@@ -290,11 +311,7 @@ void ToGraph::reset() {
 ToGraph::ToGraph() {
   pattern =
       StackPatternBuilder::get()
-          /*
-           * FIXME: optional patterns on the bottom of the stack cause problems
-           * This will require some reworking
-           */
-          // .optional(token_p<TokenType::KEYWORD, kw_strict>, &deletable)
+          .optional(token_p<TokenType::KEYWORD, kw_strict>, &deletable)
           .one(token_p<TokenType::KEYWORD, kw_graph>, &deletable)
           .optional(token_p<TokenType::NAME, any_value>, &deletable, &name)
           .one(token_p<TokenType::OPENING_BRACE>, &deletable)
