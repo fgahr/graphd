@@ -8,6 +8,26 @@ namespace graphd::input::reduce {
 
 class StackPattern;
 
+/**
+ * Reduction to a single attribute in an attribute list.
+ */
+class ToAttribute : public Reduction {
+  public:
+    virtual bool perform(Token, ParseStack &s) override;
+    virtual ~ToAttribute();
+    ToAttribute();
+
+  private:
+    void reset();
+    std::string attr_name;
+    std::string attr_value;
+    std::vector<Expression *> deletable;
+    StackPattern *pattern;
+};
+
+/**
+ * Reduction to a single statement.
+ */
 class ToStatement : public Reduction {
   public:
     virtual bool perform(Token, ParseStack &s) override;

@@ -29,18 +29,42 @@ void cleanup(ParseStack &s) {
     }
 }
 
+TEST(ReductionSuccess, attribute) {
+    reduce::ToAttribute to_attr;
+    ParseStack stack;
+    add_tokens(stack, "weight=1.0");
+
+    EXPECT_TRUE(to_attr.perform(eoi, stack));
+    EXPECT_EQ(stack.size(), 1);
+    EXPECT_TRUE(expr::Attribute::is_instance(stack.back()));
+
+    cleanup(stack);
+}
+
+TEST(ReductionFail, attribute) {
+    reduce::ToAttribute to_attr;
+    ParseStack stack;
+    add_tokens(stack, "weight=,");
+
+    auto pre_size = stack.size();
+    EXPECT_FALSE(to_attr.perform(eoi, stack));
+    EXPECT_EQ(stack.size(), pre_size);
+
+    cleanup(stack);
+}
+
 TEST(ReductionSuccess, statement) {
-    reduce::ToStatement toStmt;
+    reduce::ToStatement to_stmt;
     ParseStack stack;
     add_tokens(stack, "strict graph {\n\ta -- b;");
 
-    EXPECT_TRUE(toStmt.perform(clb, stack));
+    EXPECT_TRUE(to_stmt.perform(clb, stack));
     EXPECT_EQ(stack.size(), 4);
     EXPECT_TRUE(expr::Statement::is_instance(stack.back()));
 
     add_tokens(stack, "b -- c;");
 
-    EXPECT_TRUE(toStmt.perform(clb, stack));
+    EXPECT_TRUE(to_stmt.perform(clb, stack));
     EXPECT_EQ(stack.size(), 5);
     EXPECT_TRUE(expr::Statement::is_instance(stack.back()));
 
@@ -48,25 +72,25 @@ TEST(ReductionSuccess, statement) {
 }
 
 TEST(ReductionFail, statement) {
-    reduce::ToStatement toStmt;
+    reduce::ToStatement to_stmt;
     ParseStack stack;
     add_tokens(stack, "{ a -- b }");
 
     auto pre_size = stack.size();
-    EXPECT_FALSE(toStmt.perform(eoi, stack));
+    EXPECT_FALSE(to_stmt.perform(eoi, stack));
     EXPECT_EQ(stack.size(), pre_size);
 
     cleanup(stack);
 }
 
 TEST(ReductionSuccess, stmtListNew) {
-    reduce::ToStmtList toList;
+    reduce::ToStmtList to_list;
     ParseStack stack;
     add_tokens(stack, "graph foo {");
     stack.push_back(new expr::EdgeStmt{"a", "b"});
     stack.push_back(new expr::EdgeStmt{"c", "d"});
 
-    EXPECT_TRUE(toList.perform(clb, stack));
+    EXPECT_TRUE(to_list.perform(clb, stack));
     EXPECT_EQ(stack.size(), 4);
     EXPECT_TRUE(expr::StmtList::is_instance(stack.back()));
 
@@ -74,29 +98,29 @@ TEST(ReductionSuccess, stmtListNew) {
 }
 
 TEST(ReductionSuccess, stmtListExists) {
-    reduce::ToStmtList toList;
+    reduce::ToStmtList to_list;
     ParseStack stack;
     expr::StmtList *list = new expr::StmtList;
     list->add_statement(new expr::EdgeStmt{"1", "2"});
     stack.push_back(list);
     stack.push_back(new expr::EdgeStmt{"1", "3"});
 
-    EXPECT_TRUE(toList.perform(Token{TokenType::NUMERAL, "4"}, stack));
+    EXPECT_TRUE(to_list.perform(Token{TokenType::NUMERAL, "4"}, stack));
     EXPECT_EQ(stack.size(), 1);
     EXPECT_TRUE(expr::StmtList::is_instance(stack.back()));
 
     // Add another statement
-    reduce::ToStatement toStmt;
+    reduce::ToStatement to_stmt;
 
     add_tokens(stack, "4 -- 3;");
 
-    EXPECT_TRUE(toStmt.perform(clb, stack));
+    EXPECT_TRUE(to_stmt.perform(clb, stack));
     EXPECT_EQ(stack.size(), 2);
     EXPECT_TRUE(expr::Statement::is_instance(stack.back()));
 
     // Fold it into the list
 
-    EXPECT_TRUE(toList.perform(clb, stack));
+    EXPECT_TRUE(to_list.perform(clb, stack));
     EXPECT_EQ(stack.size(), 1);
     EXPECT_TRUE(expr::StmtList::is_instance(stack.back()));
 
@@ -104,25 +128,25 @@ TEST(ReductionSuccess, stmtListExists) {
 }
 
 TEST(ReductionFail, stmtList) {
-    reduce::ToStmtList toList;
+    reduce::ToStmtList to_list;
     ParseStack stack;
     add_tokens(stack, "foo -- bar;");
 
     auto pre_size = stack.size();
-    EXPECT_FALSE(toList.perform(eoi, stack));
+    EXPECT_FALSE(to_list.perform(eoi, stack));
     EXPECT_EQ(stack.size(), pre_size);
 
     cleanup(stack);
 }
 
 TEST(ReductionSuccess, graph) {
-    reduce::ToGraph toGraph;
+    reduce::ToGraph to_graph;
     ParseStack stack;
     add_tokens(stack, "graph foo {");
     stack.push_back(new expr::StmtList);
     add_tokens(stack, "}");
 
-    EXPECT_TRUE(toGraph.perform(eoi, stack));
+    EXPECT_TRUE(to_graph.perform(eoi, stack));
     EXPECT_EQ(stack.size(), 1);
     EXPECT_TRUE(expr::FullGraph::is_instance(stack.back()));
 
@@ -130,26 +154,26 @@ TEST(ReductionSuccess, graph) {
 }
 
 TEST(ReductionFail, graphNoEOI) {
-    reduce::ToGraph toGraph;
+    reduce::ToGraph to_graph;
     ParseStack stack;
     add_tokens(stack, "graph foo {");
     stack.push_back(new expr::StmtList);
     add_tokens(stack, "}");
 
     auto pre_size = stack.size();
-    EXPECT_FALSE(toGraph.perform(smc, stack));
+    EXPECT_FALSE(to_graph.perform(smc, stack));
     EXPECT_EQ(stack.size(), pre_size);
 
     cleanup(stack);
 }
 
 TEST(ReductionFail, graphNoGraph) {
-    reduce::ToGraph toGraph;
+    reduce::ToGraph to_graph;
     ParseStack stack;
     add_tokens(stack, "graph foo {\nx -- y;");
 
     auto pre_size = stack.size();
-    EXPECT_FALSE(toGraph.perform(eoi, stack));
+    EXPECT_FALSE(to_graph.perform(eoi, stack));
     EXPECT_EQ(stack.size(), pre_size);
 
     cleanup(stack);

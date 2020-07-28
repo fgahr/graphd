@@ -222,6 +222,37 @@ StackPattern *StackPatternBuilder::build() {
     return new StackPattern{std::move(epats)};
 }
 
+bool ToAttribute::perform(Token, ParseStack &s) {
+    reset();
+    if (pattern->matches(s)) {
+        for (auto ex : deletable) {
+            delete ex;
+            s.pop_back();
+        }
+
+        s.push_back(new expr::Attribute{attr_name, attr_value});
+        return true;
+    }
+    return false;
+}
+
+void ToAttribute::reset() {
+    attr_name.clear();
+    attr_value.clear();
+}
+
+ToAttribute::ToAttribute() {
+    pattern = StackPatternBuilder::get()
+                  .one(identifier_token, &deletable, &attr_name)
+                  .one(token_p<TokenType::EQUAL_SIGN>, &deletable)
+                  .one(identifier_token, &deletable, &attr_value)
+                  .build();
+}
+
+ToAttribute::~ToAttribute() {
+    delete pattern;
+}
+
 bool ToStatement::perform(Token, ParseStack &s) {
     reset();
     if (pattern->matches(s)) {

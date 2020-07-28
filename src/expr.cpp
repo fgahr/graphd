@@ -16,6 +16,22 @@ bool TokenExpr::is_instance(Expression *e) {
     return e->type() == ExprType::TOKEN_EXPR;
 }
 
+bool Attribute::is_instance(Expression *e) {
+    return e->type() == ExprType::ATTRIBUTE;
+}
+
+ExprType Attribute::type() {
+    return ExprType::ATTRIBUTE;
+}
+
+void Attribute::apply_to_graph(Graph &) {
+    throw std::logic_error{
+        "'Attribute' object cannot be applied to graph directly"};
+}
+
+Attribute::Attribute(std::string attr_name, std::string attr_value)
+    : name{attr_name}, value{attr_value} {}
+
 bool Statement::is_instance(Expression *e) {
     switch (e->type()) {
     // NOTE: other statement types currently unsupported

@@ -18,6 +18,8 @@ enum class ExprType {
     GRAPH,
     STATEMENT_LIST,
     EDGE_STATEMENT,
+    ATTRIBUTE,
+    A_LIST,
     ATTRIBUTE_LIST,
     TOKEN_EXPR,
 };

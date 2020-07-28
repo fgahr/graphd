@@ -26,6 +26,18 @@ class TokenExpr : public Expression {
     Token token;
 };
 
+class Attribute : public Expression {
+  public:
+    static bool is_instance(Expression *e);
+    virtual ExprType type() override;
+    virtual void apply_to_graph(Graph &g) override;
+    virtual ~Attribute() = default;
+    Attribute(std::string attr_name, std::string attr_value);
+
+    std::string name;
+    std::string value;
+};
+
 class Statement : public Expression {
   public:
     static bool is_instance(Expression *e);
