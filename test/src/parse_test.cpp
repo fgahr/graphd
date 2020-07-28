@@ -32,19 +32,37 @@ void cleanup(ParseStack &s) {
 TEST(ReductionSuccess, attribute) {
     reduce::ToAttribute to_attr;
     ParseStack stack;
-    add_tokens(stack, "weight=1.0");
+    add_tokens(stack, ",key=value");
 
     EXPECT_TRUE(to_attr.perform(eoi, stack));
     EXPECT_EQ(stack.size(), 1);
     EXPECT_TRUE(expr::Attribute::is_instance(stack.back()));
 
+    add_tokens(stack, ",weight=2.0");
+
+    EXPECT_TRUE(to_attr.perform(eoi, stack));
+    EXPECT_EQ(stack.size(), 2);
+    EXPECT_TRUE(expr::Attribute::is_instance(stack.back()));
+
     cleanup(stack);
 }
 
-TEST(ReductionFail, attribute) {
+TEST(ReductionFail, attributeNoValue) {
     reduce::ToAttribute to_attr;
     ParseStack stack;
     add_tokens(stack, "weight=,");
+
+    auto pre_size = stack.size();
+    EXPECT_FALSE(to_attr.perform(eoi, stack));
+    EXPECT_EQ(stack.size(), pre_size);
+
+    cleanup(stack);
+}
+
+TEST(ReductionFail, attributeNoComma) {
+    reduce::ToAttribute to_attr;
+    ParseStack stack;
+    add_tokens(stack, "[weight=1.0");
 
     auto pre_size = stack.size();
     EXPECT_FALSE(to_attr.perform(eoi, stack));

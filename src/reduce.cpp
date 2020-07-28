@@ -239,10 +239,12 @@ bool ToAttribute::perform(Token, ParseStack &s) {
 void ToAttribute::reset() {
     attr_name.clear();
     attr_value.clear();
+    deletable.clear();
 }
 
-ToAttribute::ToAttribute() {
+ToAttribute::ToAttribute() : attr_name{""}, attr_value{""}, deletable{} {
     pattern = StackPatternBuilder::get()
+                  .one(token_p<TokenType::COMMA>, &deletable)
                   .one(identifier_token, &deletable, &attr_name)
                   .one(token_p<TokenType::EQUAL_SIGN>, &deletable)
                   .one(identifier_token, &deletable, &attr_value)
