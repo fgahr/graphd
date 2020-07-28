@@ -71,7 +71,7 @@ struct ExprPattern {
     /**
      * How many expressions to expect.
      */
-    enum { MANDATORY, OPTIONAL, ONE_OR_MORE } qualifier;
+    enum { MANDATORY, OPTIONAL, ONE_OR_MORE, ANY } qualifier;
     /**
      * Which conditions the expressions need to satisfy.
      */
@@ -92,6 +92,8 @@ struct ExprPattern {
             return matches_optional(walker);
         case ONE_OR_MORE:
             return matches_one_or_more(walker);
+        case ANY:
+            return any_match(walker);
         default:
             throw std::logic_error{"illegal 'qualifier' enum value: " +
                                    std::to_string(qualifier)};
@@ -138,6 +140,17 @@ struct ExprPattern {
 
         if (!predicate(walker.get())) {
             return false;
+        }
+
+        while (predicate(walker.get())) {
+            store_expr(walker.get());
+            walker.shift();
+        }
+        return true;
+    }
+    bool any_match(StackWalker &walker) {
+        if (walker.exhausted()) {
+            return true;
         }
 
         while (predicate(walker.get())) {
@@ -213,6 +226,16 @@ class StackPatternBuilder {
         });
         return *this;
     }
+    Self any(epred pred, evec *exp_into = nullptr) {
+        epats.push_back(ExprPattern{
+            ExprPattern::ANY,
+            pred,
+            exp_into,
+            // Retrieving values does not apply here
+            nullptr,
+        });
+        return *this;
+    }
 
   private:
     std::vector<ExprPattern> epats;
@@ -252,6 +275,44 @@ ToAttribute::ToAttribute() : attr_name{""}, attr_value{""}, deletable{} {
 }
 
 ToAttribute::~ToAttribute() {
+    delete pattern;
+}
+
+bool ToAList::perform(Token, ParseStack &s) {
+    reset();
+
+    if (pattern->matches(s)) {
+        for (auto ex : deletable) {
+            delete ex;
+            s.pop_back();
+        }
+
+        expr::AList *list = new expr::AList;
+        list->add_attribute(new expr::Attribute{name, value});
+        s.push_back(list);
+        return true;
+    }
+    return false;
+}
+
+void ToAList::reset() {
+    name.clear();
+    value.clear();
+    deletable.clear();
+    attributes.clear();
+}
+
+ToAList::ToAList() {
+    pattern = StackPatternBuilder::get()
+                  .one(token_p<TokenType::OPENING_SQUARE_BRACKET>)
+                  .one(identifier_token, &deletable, &name)
+                  .one(token_p<TokenType::EQUAL_SIGN>, &deletable)
+                  .one(identifier_token, &deletable, &value)
+                  .any(expr::Attribute::is_instance, &attributes)
+                  .build();
+}
+
+ToAList::~ToAList() {
     delete pattern;
 }
 

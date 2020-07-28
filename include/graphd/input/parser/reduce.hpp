@@ -26,6 +26,25 @@ class ToAttribute : public Reduction {
 };
 
 /**
+ * Reduction to an AList, i.e. the inner part of an attribute list.
+ */
+class ToAList : public Reduction {
+  public:
+    virtual bool perform(Token, ParseStack &s) override;
+    virtual ~ToAList();
+    ToAList();
+
+  private:
+    void reset();
+    // name and value of the first attribute in the list
+    std::string name;
+    std::string value;
+    std::vector<Expression *> deletable;
+    StackPattern *pattern;
+    std::vector<Expression *> attributes;
+};
+
+/**
  * Reduction to a single statement.
  */
 class ToStatement : public Reduction {
