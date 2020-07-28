@@ -13,6 +13,10 @@ OBJ = obj
 TSRC = test/src
 TBIN = test/bin
 
+# Keep test executables. Otherwise they are regarded as intermediate and deleted
+.SECONDARY:
+	$(TBIN)/*
+
 all: $(BIN)/$(PROGNAME)
 
 vpath %.cpp $(SRC)
