@@ -1,5 +1,7 @@
 #include <graphd/input/parser/expr.hpp>
 
+#include <utility>
+
 namespace graphd::input::expr {
 
 TokenExpr::TokenExpr(Token t) : token{t} {}
@@ -31,6 +33,43 @@ void Attribute::apply_to_graph(Graph &) {
 
 Attribute::Attribute(std::string attr_name, std::string attr_value)
     : name{attr_name}, value{attr_value} {}
+
+bool AttributeList::is_instance(Expression *e) {
+    return e->type() == ExprType::ATTRIBUTE_LIST;
+}
+
+ExprType AttributeList::type() {
+    return ExprType::ATTRIBUTE_LIST;
+}
+
+void AttributeList::apply_to_graph(Graph &) {
+    throw std::logic_error{
+        "'AttributeList' object cannot be applied to graph directly"};
+}
+
+AttributeList::AttributeList(std::vector<Attribute *> &&attrs)
+    : attributes{attrs} {}
+
+bool AList::is_instance(Expression *e) {
+    return e->type() == ExprType::A_LIST;
+}
+
+ExprType AList::type() {
+    return ExprType::A_LIST;
+}
+
+void AList::apply_to_graph(Graph &) {
+    throw std::logic_error{
+        "'AList' object cannot be applied to graph directly"};
+}
+
+void AList::add_attribute(Attribute *attr) {
+    attributes.push_back(attr);
+}
+
+AttributeList *AList::as_attr_list() {
+    return new AttributeList{std::move(attributes)};
+}
 
 bool Statement::is_instance(Expression *e) {
     switch (e->type()) {

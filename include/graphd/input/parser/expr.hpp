@@ -38,6 +38,31 @@ class Attribute : public Expression {
     std::string value;
 };
 
+class AttributeList : public Expression {
+  public:
+    static bool is_instance(Expression *e);
+    virtual ExprType type() override;
+    virtual void apply_to_graph(Graph &g) override;
+    virtual ~AttributeList() = default;
+    AttributeList(std::vector<Attribute *> &&attrs);
+
+  private:
+    std::vector<Attribute *> attributes;
+};
+
+class AList : public Expression {
+  public:
+    static bool is_instance(Expression *e);
+    virtual ExprType type() override;
+    virtual void apply_to_graph(Graph &g) override;
+    virtual ~AList() = default;
+    void add_attribute(Attribute *attr);
+    AttributeList *as_attr_list();
+
+  private:
+    std::vector<Attribute *> attributes;
+};
+
 class Statement : public Expression {
   public:
     static bool is_instance(Expression *e);
