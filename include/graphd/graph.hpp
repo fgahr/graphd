@@ -10,26 +10,26 @@ using NodeName = std::string;
 using DistMap = std::unordered_map<NodeName, double>;
 
 struct Node {
-  DistMap neighbors;
-  void add_neighbor(NodeName n, double edge_weight);
+    DistMap neighbors;
+    void add_neighbor(NodeName n, double edge_weight);
 };
 
 struct Path {
-  double total_distance;
-  std::vector<NodeName> nodes;
+    double total_distance;
+    std::vector<NodeName> nodes;
 };
 
 class Graph {
-public:
-  Path shortest_path(NodeName from, NodeName to);
-  void set_name(std::string name);
-  void add_edge(NodeName n1, NodeName n2, double distance = 1.0);
+  public:
+    Path shortest_path(NodeName from, NodeName to);
+    void set_name(std::string name);
+    void add_edge(NodeName n1, NodeName n2, double distance = 1.0);
 
-private:
-  Path dijkstra(NodeName from, NodeName to);
-  // NOTE: Might well be useless for now.
-  std::string name;
-  std::unordered_map<NodeName, Node> nodes;
+  private:
+    Path dijkstra(NodeName from, NodeName to);
+    // NOTE: Might well be useless for now.
+    std::string name;
+    std::unordered_map<NodeName, Node> nodes;
 };
 } // namespace graphd
 

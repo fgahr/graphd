@@ -7,48 +7,48 @@
 namespace graphd::input {
 
 Expression *Parser::parse() {
-  while (shift()) {
-    while (reduce()) {
-      // keep reducing
+    while (shift()) {
+        while (reduce()) {
+            // keep reducing
+        }
     }
-  }
 
-  if (stack.size() != 1) {
-    throw std::runtime_error{
-        "input must contain exactly one full graph definition"};
-  }
+    if (stack.size() != 1) {
+        throw std::runtime_error{
+            "input must contain exactly one full graph definition"};
+    }
 
-  Expression *ret = stack.front();
-  stack.clear();
-  return ret;
+    Expression *ret = stack.front();
+    stack.clear();
+    return ret;
 }
 
 bool Parser::shift() {
-  if (lookahead.type == TokenType::EOI) {
-    return false;
-  }
+    if (lookahead.type == TokenType::EOI) {
+        return false;
+    }
 
-  stack.push_back(new expr::TokenExpr{lookahead});
-  lookahead = tok.next_token();
-  return true;
+    stack.push_back(new expr::TokenExpr{lookahead});
+    lookahead = tok.next_token();
+    return true;
 }
 
 bool Parser::reduce() {
-  bool performed = false;
-  for (auto red : reductions) {
-    if (red->perform(lookahead, stack)) {
-      performed = true;
+    bool performed = false;
+    for (auto red : reductions) {
+        if (red->perform(lookahead, stack)) {
+            performed = true;
+        }
     }
-  }
-  return performed;
+    return performed;
 }
 
 Parser Parser::of(std::istream &in) {
-  Tokenizer tok{in};
-  Token next = tok.next_token();
-  auto reductions = std::vector<Reduction *>{
-      new reduce::ToStatement, new reduce::ToStmtList, new reduce::ToGraph};
-  return Parser{tok, next, reductions};
+    Tokenizer tok{in};
+    Token next = tok.next_token();
+    auto reductions = std::vector<Reduction *>{
+        new reduce::ToStatement, new reduce::ToStmtList, new reduce::ToGraph};
+    return Parser{tok, next, reductions};
 }
 
 Parser::Parser(Tokenizer tokenizer, Token first_token,
@@ -56,13 +56,13 @@ Parser::Parser(Tokenizer tokenizer, Token first_token,
     : stack{}, lookahead{first_token}, tok{tokenizer}, reductions{reductions} {}
 
 Parser::~Parser() {
-  for (auto red : reductions) {
-    delete red;
-  }
+    for (auto red : reductions) {
+        delete red;
+    }
 
-  for (auto ex : stack) {
-    delete ex;
-  }
+    for (auto ex : stack) {
+        delete ex;
+    }
 }
 
 } // namespace graphd::input

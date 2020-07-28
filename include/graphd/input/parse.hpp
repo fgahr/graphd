@@ -15,27 +15,27 @@ namespace graphd::input {
  * grammar.
  */
 enum class ExprType {
-  GRAPH,
-  STATEMENT_LIST,
-  EDGE_STATEMENT,
-  ATTRIBUTE_LIST,
-  TOKEN_EXPR,
+    GRAPH,
+    STATEMENT_LIST,
+    EDGE_STATEMENT,
+    ATTRIBUTE_LIST,
+    TOKEN_EXPR,
 };
 
 /**
  * Common interface for DOT-language expressions.
  */
 class Expression {
-public:
-  /**
-   * Type of the expression.
-   */
-  virtual ExprType type() = 0;
-  /**
-   * Modify the graph g according to this expression's semantic value.
-   */
-  virtual void apply_to_graph(Graph &g) = 0;
-  virtual ~Expression() = default;
+  public:
+    /**
+     * Type of the expression.
+     */
+    virtual ExprType type() = 0;
+    /**
+     * Modify the graph g according to this expression's semantic value.
+     */
+    virtual void apply_to_graph(Graph &g) = 0;
+    virtual ~Expression() = default;
 };
 
 typedef std::vector<Expression *> ParseStack;
@@ -44,13 +44,13 @@ typedef std::vector<Expression *> ParseStack;
  * A reduction to be performed on a parse stack.
  */
 class Reduction {
-public:
-  /**
-   * Returns true if it succeeded, false otherwise.
-   * When false is returned, the stack was not altered.
-   */
-  virtual bool perform(Token lookahead, ParseStack &s) = 0;
-  virtual ~Reduction() = default;
+  public:
+    /**
+     * Returns true if it succeeded, false otherwise.
+     * When false is returned, the stack was not altered.
+     */
+    virtual bool perform(Token lookahead, ParseStack &s) = 0;
+    virtual ~Reduction() = default;
 };
 
 /**
@@ -58,20 +58,20 @@ public:
  * adequate for the subset of the DOT language we aim to support.
  */
 class Parser {
-public:
-  Expression *parse();
-  static Parser of(std::istream &in);
-  ~Parser();
+  public:
+    Expression *parse();
+    static Parser of(std::istream &in);
+    ~Parser();
 
-private:
-  Parser(Tokenizer tokenizer, Token first_token,
-         std::vector<Reduction *> reductions);
-  bool shift();
-  bool reduce();
-  ParseStack stack;
-  Token lookahead;
-  Tokenizer tok;
-  std::vector<Reduction *> reductions;
+  private:
+    Parser(Tokenizer tokenizer, Token first_token,
+           std::vector<Reduction *> reductions);
+    bool shift();
+    bool reduce();
+    ParseStack stack;
+    Token lookahead;
+    Tokenizer tok;
+    std::vector<Reduction *> reductions;
 };
 } // namespace graphd::input
 
