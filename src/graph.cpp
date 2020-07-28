@@ -35,10 +35,7 @@ Path Graph::dijkstra(NodeName start, NodeName end) {
   DistMap distances = {{start, 0.0}};
   std::unordered_map<NodeName, NodeName> coming_from;
 
-  DistMap next_step_candidates;
-
   while (!contains(distances, end)) {
-    next_step_candidates.clear();
     double shortest_next_distance = std::numeric_limits<double>::max();
     // Which node to add in this step, connecting from prev
     NodeName next = "";
@@ -52,11 +49,9 @@ Path Graph::dijkstra(NodeName start, NodeName end) {
           continue;
         }
 
-        // Add to candidates
-        double d = keep_shortest(next_step_candidates, neighbor,
-                                 node_dist + dist_from_node);
-        if (d < shortest_next_distance) {
-          shortest_next_distance = d;
+        double total_dist = node_dist + dist_from_node;
+        if (total_dist < shortest_next_distance) {
+          shortest_next_distance = total_dist;
           next = neighbor;
           prev = node;
         }
