@@ -4,7 +4,9 @@ namespace graphd::input::expr {
 
 TokenExpr::TokenExpr(Token t) : token{t} {}
 
-ExprType TokenExpr::type() { return ExprType::TOKEN_EXPR; }
+ExprType TokenExpr::type() {
+  return ExprType::TOKEN_EXPR;
+}
 
 void TokenExpr::apply_to_graph(Graph &) {
   throw std::logic_error{"attempting to apply token expression to graph"};
@@ -27,7 +29,9 @@ bool Statement::is_instance(Expression *e) {
 EdgeStmt::EdgeStmt(std::string n1name, std::string n2name)
     : node1_name{n1name}, node2_name{n2name} {}
 
-ExprType EdgeStmt::type() { return ExprType::EDGE_STATEMENT; }
+ExprType EdgeStmt::type() {
+  return ExprType::EDGE_STATEMENT;
+}
 
 void EdgeStmt::apply_to_graph(Graph &g) {
   g.add_edge(node1_name, node2_name, distance);
@@ -35,7 +39,9 @@ void EdgeStmt::apply_to_graph(Graph &g) {
 
 StmtList::StmtList() : statements{} {}
 
-ExprType StmtList::type() { return ExprType::STATEMENT_LIST; }
+ExprType StmtList::type() {
+  return ExprType::STATEMENT_LIST;
+}
 
 void StmtList::apply_to_graph(Graph &g) {
   for (auto s : statements) {
@@ -49,7 +55,9 @@ StmtList::~StmtList() {
   }
 }
 
-void StmtList::add_statement(Statement *s) { statements.push_back(s); }
+void StmtList::add_statement(Statement *s) {
+  statements.push_back(s);
+}
 
 bool StmtList::is_instance(Expression *e) {
   return e->type() == ExprType::STATEMENT_LIST;

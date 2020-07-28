@@ -19,9 +19,15 @@ static std::string getval(Expression *e) {
 
 typedef bool (*ValuePredicate)(const std::string);
 
-static bool any_value(const std::string) { return true; }
-static bool kw_strict(const std::string s) { return s == "strict"; }
-static bool kw_graph(const std::string s) { return s == "graph"; }
+static bool any_value(const std::string) {
+  return true;
+}
+static bool kw_strict(const std::string s) {
+  return s == "strict";
+}
+static bool kw_graph(const std::string s) {
+  return s == "graph";
+}
 
 template <TokenType tt, ValuePredicate vp = any_value>
 bool token_p(Expression *e) {
@@ -40,11 +46,21 @@ bool identifier_token(Expression *e) {
 
 class StackWalker {
 public:
-  StackWalker(ParseStack &s) : stack{s} { idx = s.size() - 1; }
-  bool exhausted() { return idx < 0; }
-  bool has_next() { return idx >= 0; }
-  void shift() { idx--; }
-  Expression *get() { return stack.at(idx); }
+  StackWalker(ParseStack &s) : stack{s} {
+    idx = s.size() - 1;
+  }
+  bool exhausted() {
+    return idx < 0;
+  }
+  bool has_next() {
+    return idx >= 0;
+  }
+  void shift() {
+    idx--;
+  }
+  Expression *get() {
+    return stack.at(idx);
+  }
 
 private:
   const ParseStack &stack;
@@ -164,7 +180,9 @@ class StackPatternBuilder {
   using str = std::string;
 
 public:
-  static StackPatternBuilder get() { return StackPatternBuilder{}; }
+  static StackPatternBuilder get() {
+    return StackPatternBuilder{};
+  }
   StackPattern *build();
   Self one(epred pred, evec *exp_into = nullptr, str *val_into = nullptr) {
     epats.push_back(ExprPattern{
@@ -232,7 +250,9 @@ ToStatement::ToStatement() {
                 // TODO: Add attribute (list)
                 .build();
 }
-ToStatement::~ToStatement() { delete pattern; }
+ToStatement::~ToStatement() {
+  delete pattern;
+}
 
 bool ToStmtList::perform(Token, ParseStack &s) {
   reset();
@@ -272,7 +292,9 @@ ToStmtList::ToStmtList() {
                 .build();
 }
 
-ToStmtList::~ToStmtList() { delete pattern; }
+ToStmtList::~ToStmtList() {
+  delete pattern;
+}
 
 bool ToGraph::perform(Token lookahead, ParseStack &s) {
   deletable.clear();
@@ -320,6 +342,8 @@ ToGraph::ToGraph() {
           .build();
 }
 
-ToGraph::~ToGraph() { delete pattern; }
+ToGraph::~ToGraph() {
+  delete pattern;
+}
 
 } // namespace graphd::input::reduce

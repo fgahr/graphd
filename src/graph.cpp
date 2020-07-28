@@ -89,7 +89,9 @@ Path Graph::shortest_path(NodeName from, NodeName to) {
   return dijkstra(from, to);
 }
 
-void Graph::set_name(std::string name) { this->name = name; }
+void Graph::set_name(std::string name) {
+  this->name = name;
+}
 
 void Graph::add_edge(NodeName n1, NodeName n2, double weight) {
   if (weight < 0) {

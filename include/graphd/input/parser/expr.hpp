@@ -61,9 +61,13 @@ private:
 
 class FullGraph : public Expression {
 public:
-  virtual ExprType type() override { return ExprType::GRAPH; }
+  virtual ExprType type() override {
+    return ExprType::GRAPH;
+  }
   virtual void apply_to_graph(Graph &g) override;
-  virtual ~FullGraph() { delete stmtList; }
+  virtual ~FullGraph() {
+    delete stmtList;
+  }
   FullGraph(std::string name, StmtList *stmtList);
 
   static bool is_instance(Expression *e);
