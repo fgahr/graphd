@@ -176,10 +176,10 @@ TEST(ParseFail, illegalToken) {
                           "    3 -> 1;\n"
                           "    2 -> 3;\n"
                           "}\n\t"};
-    auto p = Parser::of(in);
 
     Expression *ex = nullptr;
     try {
+      auto p = Parser::of(in);
       ex = p.parse();
       ASSERT_TRUE(false);
     } catch (const std::exception &e) {
