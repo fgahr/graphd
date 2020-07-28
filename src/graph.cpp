@@ -33,7 +33,7 @@ void Node::add_neighbor(NodeName n, double distance) {
 
 Path Graph::dijkstra(NodeName start, NodeName end) {
     DistMap distances = {{start, 0.0}};
-    std::unordered_map<NodeName, NodeName> coming_from;
+    std::unordered_map<NodeName, NodeName> previous_hop;
 
     while (!contains(distances, end)) {
         double shortest_next_distance = std::numeric_limits<double>::max();
@@ -64,12 +64,12 @@ Path Graph::dijkstra(NodeName start, NodeName end) {
         }
 
         distances[next] = shortest_next_distance;
-        coming_from[next] = prev;
+        previous_hop[next] = prev;
     }
 
     // Trace the path backwards from end to start, building the path in reverse.
     std::vector<NodeName> hops;
-    for (NodeName n = end; n != start; n = coming_from[n]) {
+    for (NodeName n = end; n != start; n = previous_hop[n]) {
         hops.push_back(n);
     }
     hops.push_back(start);
