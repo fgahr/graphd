@@ -118,7 +118,7 @@ TEST(ReductionFail, stmtList) {
 TEST(ReductionSuccess, graph) {
   reduce::ToGraph toGraph;
   ParseStack stack;
-  add_tokens(stack, "strict graph foo {");
+  add_tokens(stack, "graph foo {");
   stack.push_back(new expr::StmtList);
   add_tokens(stack, "}");
 
@@ -132,7 +132,7 @@ TEST(ReductionSuccess, graph) {
 TEST(ReductionFail, graphNoEOI) {
   reduce::ToGraph toGraph;
   ParseStack stack;
-  add_tokens(stack, "strict graph foo {");
+  add_tokens(stack, "graph foo {");
   stack.push_back(new expr::StmtList);
   add_tokens(stack, "}");
 
@@ -146,7 +146,7 @@ TEST(ReductionFail, graphNoEOI) {
 TEST(ReductionFail, graphNoGraph) {
   reduce::ToGraph toGraph;
   ParseStack stack;
-  add_tokens(stack, "strict graph foo {\nx -- y;");
+  add_tokens(stack, "graph foo {\nx -- y;");
 
   auto pre_size = stack.size();
   EXPECT_FALSE(toGraph.perform(eoi, stack));
@@ -156,7 +156,7 @@ TEST(ReductionFail, graphNoGraph) {
 }
 
 TEST(ParseSuccess, fullGraph) {
-  std::istringstream in{"strict graph mygraph {\n"
+  std::istringstream in{"graph mygraph {\n"
                         "    1 -- 2;\n"
                         "    3 -- 1;\n"
                         "    2 -- 3;\n"
@@ -171,7 +171,7 @@ TEST(ParseSuccess, fullGraph) {
 
 TEST(ParseFail, illegalToken) {
   {
-    std::istringstream in{"strict digraph mygraph {\n"
+    std::istringstream in{"digraph mygraph {\n"
                           "    1 -> 2;\n"
                           "    3 -> 1;\n"
                           "    2 -> 3;\n"
@@ -191,7 +191,7 @@ TEST(ParseFail, illegalToken) {
   }
 
   {
-    std::istringstream in{"strict graph mygraph {\n"
+    std::istringstream in{"graph mygraph {\n"
                           "    1 -> 2;\n"
                           "    3 -> 1;\n"
                           "    2 -> 3;\n"

@@ -20,7 +20,7 @@ static std::string getval(Expression *e) {
 typedef bool (*ValuePredicate)(const std::string);
 
 static bool any_value(const std::string) { return true; }
-static bool kw_strict(const std::string s) { return s == "strict"; }
+// static bool kw_strict(const std::string s) { return s == "strict"; }
 static bool kw_graph(const std::string s) { return s == "graph"; }
 
 template <TokenType tt, ValuePredicate vp = any_value>
@@ -119,6 +119,22 @@ private:
   std::vector<ExprPattern> epats;
 };
 
+bool StackPattern::matches(ParseStack &s) {
+  // Need to traverse both stack and elements back to front.
+  auto stack_it = s.rbegin();
+  for (auto el_it = epats.rbegin(); el_it != epats.rend(); el_it++) {
+    if (stack_it == s.rend()) {
+      return false;
+    }
+    if (el_it->matches(stack_it)) {
+      continue;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
 class StackPatternBuilder {
   using Self = StackPatternBuilder &;
   using epred = expr::Predicate;
@@ -164,22 +180,6 @@ private:
 
 StackPattern *StackPatternBuilder::build() {
   return new StackPattern{std::move(epats)};
-}
-
-bool StackPattern::matches(ParseStack &s) {
-  // Need to traverse both stack and elements back to front.
-  auto stack_it = s.rbegin();
-  for (auto el_it = epats.rbegin(); el_it != epats.rend(); el_it++) {
-    if (stack_it == s.rend()) {
-      return false;
-    }
-    if (el_it->matches(stack_it)) {
-      continue;
-    } else {
-      return false;
-    }
-  }
-  return true;
 }
 
 bool ToStatement::perform(Token, ParseStack &s) {
@@ -290,7 +290,11 @@ void ToGraph::reset() {
 ToGraph::ToGraph() {
   pattern =
       StackPatternBuilder::get()
-          .optional(token_p<TokenType::KEYWORD, kw_strict>, &deletable)
+          /*
+           * FIXME: optional patterns on the bottom of the stack cause problems
+           * This will require some reworking
+           */
+          // .optional(token_p<TokenType::KEYWORD, kw_strict>, &deletable)
           .one(token_p<TokenType::KEYWORD, kw_graph>, &deletable)
           .optional(token_p<TokenType::NAME, any_value>, &deletable, &name)
           .one(token_p<TokenType::OPENING_BRACE>, &deletable)
