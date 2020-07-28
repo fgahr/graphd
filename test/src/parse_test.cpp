@@ -169,6 +169,14 @@ TEST(ParseSuccess, fullGraph) {
   delete ex;
 }
 
+TEST(ParseFail, incomplete) {
+  std::istringstream in{"name { a -- b; }"};
+
+  Parser p = Parser::of(in);
+
+  ASSERT_ANY_THROW(p.parse());
+}
+
 TEST(ParseFail, illegalToken) {
   {
     std::istringstream in{"digraph mygraph {\n"
