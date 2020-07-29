@@ -68,19 +68,19 @@ bool Token::is_identifier() {
 Token Token::from(char c) {
     switch (c) {
     case ';':
-        return Token{TokenType::SEMICOLON, ""};
+        return Token{TokenType::SEMICOLON, ";"};
     case ',':
-        return Token{TokenType::COMMA, ""};
+        return Token{TokenType::COMMA, ","};
     case '{':
-        return Token{TokenType::OPENING_BRACE, ""};
+        return Token{TokenType::OPENING_BRACE, "{"};
     case '}':
-        return Token{TokenType::CLOSING_BRACE, ""};
+        return Token{TokenType::CLOSING_BRACE, "}"};
     case '[':
-        return Token{TokenType::OPENING_SQUARE_BRACKET, ""};
+        return Token{TokenType::OPENING_SQUARE_BRACKET, "["};
     case ']':
-        return Token{TokenType::CLOSING_SQUARE_BRACKET, ""};
+        return Token{TokenType::CLOSING_SQUARE_BRACKET, "]"};
     case '=':
-        return Token{TokenType::EQUAL_SIGN, ""};
+        return Token{TokenType::EQUAL_SIGN, "="};
     default:
         throw std::logic_error{"not a valid token " + std::to_string(c)};
     }
@@ -90,6 +90,12 @@ Token Token::from(std::string s) {
     if (s.size() == 1 && is_fixed_token(s.front())) {
         return Token::from(s.front());
     }
+
+    if (s == "--")
+        return Token{TokenType::UNDIRECTED_EDGE, "--"};
+    if (s == "->")
+        throw std::runtime_error{
+            "directed graphs not supported; illegal token: ->"};
 
     if (is_supported_keyword(s)) {
         return Token{TokenType::KEYWORD, downcase(s)};
@@ -193,12 +199,9 @@ Token Tokenizer::next_token() {
             if (c == EOF) {
                 throw std::runtime_error{"unexpected end of input"};
             } else if (c == '-') {
-                return Token{TokenType::UNDIRECTED_EDGE, ""};
+                return Token::from("--");
             } else if (c == '>') {
-                throw std::runtime_error{
-                    "unexpected token: -> (only undirected graphs "
-                    "are supported at this time)"};
-                // return Token{TokenType::DIRECTED_EDGE, ""};
+                return Token::from("->");
             } else {
                 in.putback(c);
                 return Token{TokenType::NUMERAL, "-" + read_numeral()};

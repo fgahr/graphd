@@ -85,22 +85,22 @@ TEST(TokenizerMultipleTokens, simpleGraph) {
     Tokenizer tok{in};
 
     // clang-format off
-  std::vector<Token> expected{
-      {TokenType::KEYWORD, "graph"},
-      {TokenType::NAME, "gname"},
-      {TokenType::OPENING_BRACE, ""},
-      {TokenType::NAME, "a"},
-      {TokenType::UNDIRECTED_EDGE, ""},
-      {TokenType::NAME, "b"},
-      {TokenType::OPENING_SQUARE_BRACKET, ""},
-      {TokenType::NAME, "weight"},
-      {TokenType::EQUAL_SIGN, ""},
-      {TokenType::NUMERAL, "2.3"},
-      {TokenType::CLOSING_SQUARE_BRACKET, ""},
-      {TokenType::SEMICOLON, ""},
-      {TokenType::CLOSING_BRACE, ""},
-      {TokenType::EOI, ""},
-  };
+    std::vector<Token> expected{
+        {TokenType::KEYWORD, "graph"},
+        {TokenType::NAME, "gname"},
+        {TokenType::OPENING_BRACE, "{"},
+        {TokenType::NAME, "a"},
+        {TokenType::UNDIRECTED_EDGE, "--"},
+        {TokenType::NAME, "b"},
+        {TokenType::OPENING_SQUARE_BRACKET, "["},
+        {TokenType::NAME, "weight"},
+        {TokenType::EQUAL_SIGN, "="},
+        {TokenType::NUMERAL, "2.3"},
+        {TokenType::CLOSING_SQUARE_BRACKET, "]"},
+        {TokenType::SEMICOLON, ";"},
+        {TokenType::CLOSING_BRACE, "}"},
+        {TokenType::EOI, ""},
+    };
     // clang-format on
 
     for (auto ex : expected) {
