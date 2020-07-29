@@ -6,10 +6,6 @@
 #define AS_STMT(e) static_cast<expr::Statement *>(e)
 
 namespace graphd::input::reduce {
-template <TokenType tt> bool is_tkn(Expression *e) {
-    return expr::TokenExpr::is_instance<tt>(e);
-}
-
 static std::string getval(Expression *e) {
     if (!expr::TokenExpr::is_instance(e)) {
         throw std::logic_error{"mistakenly encountered non-token expression"};
