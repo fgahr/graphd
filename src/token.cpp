@@ -18,17 +18,22 @@ static std::string downcase(std::string s) {
 }
 
 static std::vector<std::string> supported_keywords{"graph", "strict"};
-static std::vector<std::string> unsupported_keywords{"node", "edge", "digraph",
-                                                     "subgraph"};
 
-static bool is_keyword(std::string s) {
+static bool is_supported_keyword(std::string s) {
     s = downcase(s);
     for (auto kw : supported_keywords) {
         if (s == kw) {
             return true;
         }
     }
+    return false;
+}
 
+static std::vector<std::string> unsupported_keywords{"node", "edge", "digraph",
+                                                     "subgraph"};
+
+static bool is_unsupported_keyword(std::string s) {
+    s = downcase(s);
     for (auto kw : unsupported_keywords) {
         if (s == kw) {
             throw std::runtime_error{"unsupported keyword: " + s};
@@ -38,7 +43,18 @@ static bool is_keyword(std::string s) {
     return false;
 }
 
+static const char fixed_tokens[] = ";,{}[]=";
+
+static bool is_fixed_token(int c) {
+    for (char tok : fixed_tokens) {
+        if (c == tok)
+            return true;
+    }
+    return false;
+}
+
 namespace graphd::input {
+
 bool Token::is_identifier() {
     switch (this->type) {
     case TokenType::NAME:
@@ -46,6 +62,41 @@ bool Token::is_identifier() {
         return true;
     default:
         return false;
+    }
+}
+
+Token Token::from(char c) {
+    switch (c) {
+    case ';':
+        return Token{TokenType::SEMICOLON, ""};
+    case ',':
+        return Token{TokenType::COMMA, ""};
+    case '{':
+        return Token{TokenType::OPENING_BRACE, ""};
+    case '}':
+        return Token{TokenType::CLOSING_BRACE, ""};
+    case '[':
+        return Token{TokenType::OPENING_SQUARE_BRACKET, ""};
+    case ']':
+        return Token{TokenType::CLOSING_SQUARE_BRACKET, ""};
+    case '=':
+        return Token{TokenType::EQUAL_SIGN, ""};
+    default:
+        throw std::logic_error{"not a valid token " + std::to_string(c)};
+    }
+}
+
+Token Token::from(std::string s) {
+    if (s.size() == 1 && is_fixed_token(s.front())) {
+        return Token::from(s.front());
+    }
+
+    if (is_supported_keyword(s)) {
+        return Token{TokenType::KEYWORD, downcase(s)};
+    } else if (is_unsupported_keyword(s)) {
+        throw std::runtime_error{"unsupported keyword: " + s};
+    } else {
+        return Token{TokenType::NAME, s};
     }
 }
 
@@ -129,33 +180,15 @@ std::string Tokenizer::read_numeral() {
 Token Tokenizer::next_token() {
     // NOTE: Error handling not bulletproof. In particular, badbit needs to be
     // checked after putback.
-    std::string name;
-    while (!in.eof()) {
-        int c = in.get();
-        switch (c) {
-        case EOF:
-            return Token{TokenType::EOI, ""};
-        case ' ':
-        case '\t':
-        case '\n':
+    int c;
+    while ((c = in.get()) != EOF) {
+        if (std::isspace(c))
             continue;
-        case ';':
-            return Token{TokenType::SEMICOLON, ""};
-        case ',':
-            return Token{TokenType::COMMA, ""};
-        case '{':
-            return Token{TokenType::OPENING_BRACE, ""};
-        case '}':
-            return Token{TokenType::CLOSING_BRACE, ""};
-        case '[':
-            return Token{TokenType::OPENING_SQUARE_BRACKET, ""};
-        case ']':
-            return Token{TokenType::CLOSING_SQUARE_BRACKET, ""};
-        case '=':
-            return Token{TokenType::EQUAL_SIGN, ""};
-        case '"':
+        if (is_fixed_token(c))
+            return Token::from((char)c);
+        if (c == '"')
             return Token{TokenType::NAME, read_string()};
-        case '-':
+        if (c == '-') {
             c = in.get();
             if (c == EOF) {
                 throw std::runtime_error{"unexpected end of input"};
@@ -170,22 +203,18 @@ Token Tokenizer::next_token() {
                 in.putback(c);
                 return Token{TokenType::NUMERAL, "-" + read_numeral()};
             }
-        default:
-            if (std::isalpha(c) || c == '_') {
-                in.putback(c);
-                name = read_name();
-                if (is_keyword(name)) {
-                    return Token{TokenType::KEYWORD, downcase(name)};
-                } else {
-                    return Token{TokenType::NAME, name};
-                }
-            } else if (c == '.' || std::isdigit(c)) {
-                in.putback(c);
-                return Token{TokenType::NUMERAL, read_numeral()};
-            } else {
-                throw std::runtime_error{"unexpected input byte: " +
-                                         std::to_string((char)c)};
-            }
+        }
+
+        if (std::isalpha(c) || c == '_') {
+            in.putback(c);
+            std::string name = read_name();
+            return Token::from(name);
+        } else if (c == '.' || std::isdigit(c)) {
+            in.putback(c);
+            return Token{TokenType::NUMERAL, read_numeral()};
+        } else {
+            throw std::runtime_error{"unexpected input byte: " +
+                                     std::to_string((char)c)};
         }
     }
 

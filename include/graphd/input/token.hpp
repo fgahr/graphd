@@ -31,6 +31,8 @@ struct Token {
      * Whether this token can represent an identifier.
      */
     bool is_identifier();
+    static Token from(char c);
+    static Token from(std::string s);
 };
 
 class Tokenizer {
