@@ -246,17 +246,13 @@ using pattern::add_to;
 using pattern::flag;
 using pattern::value;
 
-ToAttribute::ToAttribute() : attr_name{""}, attr_value{""}, deletable{} {
-    pattern = pattern::sequence({
+ToAttribute::ToAttribute() : attr_name{""}, attr_value{""} {
+    pattern.reset(pattern::sequence({
         pattern::exact(',', {add_to(deletable)}),
         pattern::identifier({value(attr_name), add_to(deletable)}),
         pattern::exact('=', {add_to(deletable)}),
         pattern::identifier({value(attr_value), add_to(deletable)}),
-    });
-} // namespace graphd::input::reduce
-
-ToAttribute::~ToAttribute() {
-    delete pattern;
+    }));
 }
 
 bool ToAList::perform(Token, ParseStack &s) {
@@ -319,15 +315,12 @@ void ToStatement::reset() {
 }
 
 ToStatement::ToStatement() {
-    pattern = pattern::sequence({
+    pattern.reset(pattern::sequence({
         pattern::identifier({value(n1name), add_to(deletable)}),
         pattern::exact("--", {add_to(deletable)}),
         pattern::identifier({value(n2name), add_to(deletable)}),
         pattern::exact(';', {add_to(deletable)}),
-    });
-}
-ToStatement::~ToStatement() {
-    delete pattern;
+    }));
 }
 
 bool ToStmtList::perform(Token, ParseStack &s) {

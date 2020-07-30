@@ -9,7 +9,7 @@ namespace graphd::input::reduce {
 
 class StackPattern;
 
-using _StackPattern = pattern::Pattern;
+using Pat = std::unique_ptr<pattern::Pattern>;
 
 /**
  * Reduction to a single attribute in an attribute list.
@@ -17,7 +17,7 @@ using _StackPattern = pattern::Pattern;
 class ToAttribute : public Reduction {
   public:
     virtual bool perform(Token, ParseStack &s) override;
-    virtual ~ToAttribute();
+    virtual ~ToAttribute() = default;
     ToAttribute();
 
   private:
@@ -25,7 +25,7 @@ class ToAttribute : public Reduction {
     std::string attr_name;
     std::string attr_value;
     std::vector<Expression *> deletable;
-    _StackPattern *pattern;
+    Pat pattern;
 };
 
 /**
@@ -53,7 +53,7 @@ class ToAList : public Reduction {
 class ToStatement : public Reduction {
   public:
     virtual bool perform(Token, ParseStack &s) override;
-    virtual ~ToStatement();
+    virtual ~ToStatement() = default;
     ToStatement();
 
   private:
@@ -61,7 +61,7 @@ class ToStatement : public Reduction {
     std::string n1name;
     std::string n2name;
     std::vector<Expression *> deletable;
-    _StackPattern *pattern;
+    Pat pattern;
 };
 
 /**
