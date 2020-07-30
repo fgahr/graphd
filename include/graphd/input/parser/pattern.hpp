@@ -62,23 +62,22 @@ class Pattern {
     virtual ~Pattern() = default;
 };
 
-using pat = std::unique_ptr<Pattern>;
-using slot = std::unique_ptr<Slot>;
-using slot_list = std::vector<slot>;
+using slot_list = std::initializer_list<Slot *>;
 
-slot flag(bool &b);
-slot value(std::string &value);
-slot add_to(std::vector<Expression *> &into);
+Slot *flag(bool &b);
+Slot *value(std::string &value);
+Slot *add_to(std::vector<Expression *> &into);
 
-pat exact(char token, slot_list into = {});
-pat exact(std::string token, slot_list into = {});
-pat optional(char token, slot_list into = {});
-pat optional(std::string token, slot_list into = {});
-pat optional(pat &&p, slot_list into = {});
-pat identifier(slot_list into = {});
+Pattern *exact(char token, slot_list into = {});
+Pattern *exact(std::string token, slot_list into = {});
+Pattern *optional(char token, slot_list into = {});
+Pattern *optional(std::string token, slot_list into = {});
+Pattern *optional(Pattern *p, slot_list into = {});
+Pattern *identifier(slot_list into = {});
 
-pat one_of(pat &&p1, pat &&p2, slot_list into = {});
-pat sequence(std::initializer_list<pat &&> patterns, slot_list into = {});
+Pattern *one_of(Pattern *p1, Pattern *p2, slot_list into = {});
+Pattern *sequence(std::initializer_list<Pattern *> patterns,
+                  slot_list into = {});
 
 } // namespace graphd::input::pattern
 

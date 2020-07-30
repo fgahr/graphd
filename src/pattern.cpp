@@ -36,7 +36,8 @@ Expression *StackWalker::get() {
 
 class TokenMatch : public Pattern {
   public:
-    TokenMatch(Token tok, slot_list &&into) : t{tok}, ss{std::move(into)} {}
+    TokenMatch(Token token, std::vector<Slot *> slots)
+        : expected{token}, slots{slots} {}
     virtual bool match(StackWalker &walker) override {
         if (walker.exhausted()) {
             return false;
@@ -48,26 +49,33 @@ class TokenMatch : public Pattern {
         }
 
         Token tok = static_cast<expr::TokenExpr *>(e)->token;
-        if (tok.type == t.type && tok.value == t.value) {
-            for (size_t i = 0; i < ss.size(); i++) {
-                ss.at(i)->put(nullptr);
+        if (tok.type == expected.type && tok.value == expected.value) {
+            for (size_t i = 0; i < slots.size(); i++) {
+                slots.at(i)->put(nullptr);
             }
             walker.shift();
             return true;
         }
         return false;
     }
-    virtual ~TokenMatch() = default;
+    virtual ~TokenMatch() {
+        for (auto s : slots) {
+            delete s;
+        }
+    }
 
   private:
-    Token t;
-    std::vector<slot> ss;
+    Token expected;
+    std::vector<Slot *> slots;
 };
 
 class IdentifierMatch : public Pattern {
   public:
-    IdentifierMatch(slot_list &&into)
-        : ss{std::forward<std::vector<slot>>(into)} {}
+    IdentifierMatch(std::vector<Slot *> __slots) : slots{} {
+        for (auto s : __slots) {
+            slots.push_back(std::unique_ptr<Slot>{s});
+        }
+    }
     virtual bool match(StackWalker &walker) override {
         if (walker.exhausted()) {
             return false;
@@ -82,8 +90,8 @@ class IdentifierMatch : public Pattern {
         Token tok = static_cast<expr::TokenExpr *>(e)->token;
 
         if (tok.is_identifier()) {
-            for (size_t i = 0; i < ss.size(); i++) {
-                ss.at(i)->put(e);
+            for (size_t i = 0; i < slots.size(); i++) {
+                slots.at(i)->put(e);
             }
             walker.shift();
             return true;
@@ -93,19 +101,19 @@ class IdentifierMatch : public Pattern {
     virtual ~IdentifierMatch() = default;
 
   private:
-    std::vector<slot> ss;
+    std::vector<std::unique_ptr<Slot>> slots;
 };
 
 class OptionalMatch : public Pattern {
   public:
-    OptionalMatch(pat pattern, slot_list &&into)
-        : p{std::move(pattern)}, ss{std::move(into)} {}
+    OptionalMatch(Pattern *pattern, std::vector<Slot *> slots)
+        : pattern{pattern}, slots{slots} {}
     virtual bool match(StackWalker &walker) override {
         walker.save();
-        if (p->match(walker)) {
+        if (pattern->match(walker)) {
             walker.forget();
-            for (size_t i = 0; i < ss.size(); i++) {
-                ss.at(i)->put(nullptr);
+            for (size_t i = 0; i < slots.size(); i++) {
+                slots.at(i)->put(nullptr);
             }
         } else {
             walker.restore();
@@ -113,54 +121,62 @@ class OptionalMatch : public Pattern {
 
         return true;
     }
-    virtual ~OptionalMatch() = default;
+    virtual ~OptionalMatch() {
+        for (auto s : slots) {
+            delete s;
+        }
+    }
 
   private:
-    pat p;
-    std::vector<slot> ss;
+    std::unique_ptr<Pattern> pattern;
+    std::vector<Slot *> slots;
 };
 
 class OneOfTwoMatch : public Pattern {
   public:
-    OneOfTwoMatch(pat &&p1, pat &&p2, slot_list &&into)
-        : p1{std::move(p1)}, p2{std::move(p2)}, ss{std::move(into)} {}
+    OneOfTwoMatch(Pattern *p1, Pattern *p2, std::vector<Slot *> slots)
+        : p1{p1}, p2{p2}, slots{slots} {}
     virtual bool match(StackWalker &walker) override {
         walker.save();
         if (p1->match(walker)) {
             walker.forget();
-            for (size_t i = 0; i < ss.size(); i++) {
-                ss.at(i)->put(nullptr);
+            for (size_t i = 0; i < slots.size(); i++) {
+                slots.at(i)->put(nullptr);
             }
             return true;
         }
 
         walker.restore();
         if (p2->match(walker)) {
-            for (size_t i = 0; i < ss.size(); i++) {
-                ss.at(i)->put(nullptr);
+            for (size_t i = 0; i < slots.size(); i++) {
+                slots.at(i)->put(nullptr);
             }
             return true;
         }
 
         return false;
     }
-    virtual ~OneOfTwoMatch() = default;
+    virtual ~OneOfTwoMatch() {
+        for (auto s : slots) {
+            delete s;
+        }
+    }
 
   private:
-    pat p1;
-    pat p2;
-    std::vector<slot> ss;
+    std::unique_ptr<Pattern> p1;
+    std::unique_ptr<Pattern> p2;
+    std::vector<Slot *> slots;
 };
 
 class SequenceMatch : public Pattern {
   public:
-    SequenceMatch(std::vector<pat> &&pats, slot_list &&into)
-        : patterns{std::move(pats)}, ss{std::move(into)} {}
+    SequenceMatch(std::vector<Pattern *> patterns, std::vector<Slot *> slots)
+        : patterns{patterns}, slots{slots} {}
     virtual bool match(StackWalker &walker) override {
         walker.save();
 
         for (auto it = patterns.rbegin(); it != patterns.rend(); it++) {
-            pat &p = *it;
+            auto &p = *it;
             if (!p->match(walker)) {
                 walker.restore();
                 return false;
@@ -168,17 +184,25 @@ class SequenceMatch : public Pattern {
         }
 
         walker.forget();
-        for (size_t i = 0; i < ss.size(); i++) {
-            ss.at(i)->put(nullptr);
+        for (size_t i = 0; i < slots.size(); i++) {
+            slots.at(i)->put(nullptr);
         }
 
         return true;
     }
-    virtual ~SequenceMatch() = default;
+    virtual ~SequenceMatch() {
+        for (auto p : patterns) {
+            delete p;
+        }
+
+        for (auto s : slots) {
+            delete s;
+        }
+    }
 
   private:
-    std::vector<pat> patterns;
-    std::vector<slot> ss;
+    std::vector<Pattern *> patterns;
+    std::vector<Slot *> slots;
 };
 
 class BoolSlot : public Slot {
@@ -223,50 +247,48 @@ class ListSlot : public Slot {
     std::vector<Expression *> &into;
 };
 
-slot flag(bool &b) {
-    return std::make_unique<BoolSlot>(b);
+Slot *flag(bool &b) {
+    return new BoolSlot{b};
 }
 
-slot value(std::string &value) {
-    return std::make_unique<ValueSlot>(value);
+Slot *value(std::string &value) {
+    return new ValueSlot{value};
 }
 
-slot add_to(std::vector<Expression *> &into) {
-    return std::make_unique<ListSlot>(into);
+Slot *add_to(std::vector<Expression *> &into) {
+    return new ListSlot{into};
 }
 
-pat exact(char token, slot_list into) {
-    return std::make_unique<TokenMatch>(Token::from(token), std::move(into));
+Pattern *exact(char token, slot_list into) {
+    return new TokenMatch(Token::from(token), into);
 }
 
-pat exact(std::string token, slot_list into) {
-    return std::make_unique<TokenMatch>(Token::from(token), std::move(into));
+Pattern *exact(std::string token, slot_list into) {
+    return new TokenMatch(Token::from(token), into);
 }
 
-pat optional(char token, slot_list into) {
-    return std::make_unique<OptionalMatch>(exact(token), std::move(into));
+Pattern *optional(char token, slot_list into) {
+    return new OptionalMatch{exact(token), into};
 }
 
-pat optional(std::string token, slot_list into) {
-    return std::make_unique<OptionalMatch>(exact(token), std::move(into));
+Pattern *optional(std::string token, slot_list into) {
+    return new OptionalMatch{exact(token), into};
 }
 
-pat optional(pat &&p, slot_list into) {
-    return std::make_unique<OptionalMatch>(std::move(p), std::move(into));
+Pattern *optional(Pattern *p, slot_list into) {
+    return new OptionalMatch{p, into};
 }
 
-pat identifier(slot_list into) {
-    return std::make_unique<IdentifierMatch>(std::move(into));
+Pattern *identifier(slot_list into) {
+    return new IdentifierMatch{into};
 }
 
-pat one_of(pat &&p1, pat &&p2, slot_list into) {
-    return std::make_unique<OneOfTwoMatch>(std::move(p1), std::move(p2),
-                                           std::move(into));
+Pattern *one_of(Pattern *p1, Pattern *p2, slot_list into) {
+    return new OneOfTwoMatch{p1, p2, into};
 }
 
-pat sequence(std::vector<pat> patterns, slot_list into) {
-    return std::make_unique<SequenceMatch>(std::move(patterns),
-                                           std::move(into));
+Pattern *sequence(std::initializer_list<Pattern *> patterns, slot_list into) {
+    return new SequenceMatch(patterns, into);
 }
 
 } // namespace graphd::input::pattern
