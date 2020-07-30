@@ -299,7 +299,8 @@ ToAList::~ToAList() {
 
 bool ToStatement::perform(Token, ParseStack &s) {
     reset();
-    if (pattern->matches(s)) {
+    StackWalker walker{s};
+    if (pattern->match(walker)) {
         for (auto ex : deletable) {
             delete ex;
             s.pop_back();
@@ -318,13 +319,12 @@ void ToStatement::reset() {
 }
 
 ToStatement::ToStatement() {
-    pattern = StackPatternBuilder::get()
-                  .one(identifier_token, &deletable, &n1name)
-                  .one(token_p<TokenType::UNDIRECTED_EDGE>, &deletable)
-                  .one(identifier_token, &deletable, &n2name)
-                  .one(token_p<TokenType::SEMICOLON>, &deletable)
-                  // TODO: Add attribute (list)
-                  .build();
+    pattern = pattern::sequence({
+        pattern::identifier({value(n1name), add_to(deletable)}),
+        pattern::exact("--", {add_to(deletable)}),
+        pattern::identifier({value(n2name), add_to(deletable)}),
+        pattern::exact(';', {add_to(deletable)}),
+    });
 }
 ToStatement::~ToStatement() {
     delete pattern;

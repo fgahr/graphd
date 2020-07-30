@@ -60,9 +60,8 @@ class ToStatement : public Reduction {
     void reset();
     std::string n1name;
     std::string n2name;
-    // Gather all obsolete expressions here
     std::vector<Expression *> deletable;
-    StackPattern *pattern;
+    _StackPattern *pattern;
 };
 
 /**
