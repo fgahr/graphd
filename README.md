@@ -48,20 +48,20 @@ total distance: 8
 a -> g -> f -> p -> o -> v -> u -> y -> z
 ```
 
+The second example just about covers the subset of DOT currently supported.
+There is no limit on the number of expressions. Attributes other than `weight`
+are ignored. Directed graphs are not allowed.
+
 Since we're the DOT format, we can easily get graphviz to produce a
 visualization for the graph in the third example
 
 ```
-neato -Tpng -oimg/larger.png test/input/larger.dot
+neato -Tsvg -oimg/larger.svg test/input/larger.dot
 ```
 
 resulting in
 
-![larger.dot](/img/larger.png)
-
-The second example about covers the subset of DOT currently supported. There is
-no limit on the number of expressions. Attributes other than `weight` are
-ignored. Directed graphs are not allowed.
+![larger.dot](/img/larger.svg)
 
 ## Why DOT?
 
