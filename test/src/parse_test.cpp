@@ -45,7 +45,7 @@ void cleanup(ParseStack &s) {
 TEST(ReductionSuccess, attribute) {
     reduce::ToAttribute to_attr;
     ParseStack stack;
-    add_tokens(stack, ",key=value");
+    add_tokens(stack, "key=value");
 
     EXPECT_TRUE(to_attr.perform(t('\0'), stack));
     EXPECT_EQ(stack.size(), 1);
@@ -72,14 +72,14 @@ TEST(ReductionFail, attributeNoValue) {
     cleanup(stack);
 }
 
-TEST(ReductionFail, attributeNoComma) {
+TEST(ReductionSuccess, attributeNoComma) {
     reduce::ToAttribute to_attr;
     ParseStack stack;
     add_tokens(stack, "[weight=1.0");
 
-    auto pre_size = stack.size();
-    EXPECT_FALSE(to_attr.perform(t('\0'), stack));
-    EXPECT_EQ(stack.size(), pre_size);
+    EXPECT_TRUE(to_attr.perform(t('\0'), stack));
+    EXPECT_EQ(stack.size(), 2);
+    EXPECT_TRUE(expr::Attribute::is_instance(stack.back()));
 
     cleanup(stack);
 }
@@ -87,7 +87,8 @@ TEST(ReductionFail, attributeNoComma) {
 TEST(ReductionSuccess, alist) {
     reduce::ToAList to_alist;
     ParseStack stack;
-    add_tokens(stack, "[foo=bar");
+    add_tokens(stack, "[");
+    stack.push_back(new expr::Attribute("key", "value"));
 
     EXPECT_TRUE(to_alist.perform(t(','), stack));
     EXPECT_EQ(stack.size(), 2);

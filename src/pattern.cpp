@@ -168,11 +168,70 @@ class OneOfTwoMatch : public Pattern {
     std::vector<Slot *> slots;
 };
 
+class RepeatedMatch : public Pattern {
+  public:
+    RepeatedMatch(Pattern *pattern, std::vector<Slot *> slots)
+        : pattern{pattern}, slots{slots} {}
+    virtual bool match(StackWalker &walker) override {
+        bool matched = false;
+
+        while (pattern->match(walker)) {
+            matched = true;
+        }
+
+        if (matched) {
+            for (auto s : slots) {
+                s->put(nullptr);
+            }
+
+            for (auto ex : deletable) {
+                delete ex;
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+  private:
+    std::unique_ptr<Pattern> pattern;
+    std::vector<Expression *> deletable;
+    std::vector<Slot *> slots;
+};
+
+class TypeMatch : public Pattern {
+  public:
+    TypeMatch(ExprType type, std::vector<Slot *> slots)
+        : type{type}, slots{slots} {}
+    virtual bool match(StackWalker &walker) override {
+        if (walker.exhausted()) {
+            return false;
+        }
+
+        Expression *e = walker.get();
+        if (e->type() == type) {
+            for (auto s : slots) {
+                s->put(e);
+            }
+            walker.shift();
+            return true;
+        }
+        return false;
+    }
+
+  private:
+    ExprType type;
+    std::vector<Slot *> slots;
+};
+
 class SequenceMatch : public Pattern {
   public:
     SequenceMatch(std::vector<Pattern *> patterns, std::vector<Slot *> slots)
         : patterns{patterns}, slots{slots} {}
     virtual bool match(StackWalker &walker) override {
+        if (walker.exhausted()) {
+            return false;
+        }
         walker.save();
 
         for (auto it = patterns.rbegin(); it != patterns.rend(); it++) {
@@ -279,12 +338,20 @@ Pattern *optional(Pattern *p, slot_list into) {
     return new OptionalMatch{p, into};
 }
 
+Pattern *has_type(ExprType type, slot_list into) {
+    return new TypeMatch{type, into};
+}
+
 Pattern *identifier(slot_list into) {
     return new IdentifierMatch{into};
 }
 
 Pattern *one_of(Pattern *p1, Pattern *p2, slot_list into) {
     return new OneOfTwoMatch{p1, p2, into};
+}
+
+Pattern *repeat(Pattern *p, slot_list into) {
+    return new RepeatedMatch{p, into};
 }
 
 Pattern *sequence(std::initializer_list<Pattern *> patterns, slot_list into) {

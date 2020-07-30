@@ -73,9 +73,12 @@ Pattern *exact(std::string token, slot_list into = {});
 Pattern *optional(char token, slot_list into = {});
 Pattern *optional(std::string token, slot_list into = {});
 Pattern *optional(Pattern *p, slot_list into = {});
+
+Pattern *has_type(ExprType type, slot_list into = {});
 Pattern *identifier(slot_list into = {});
 
 Pattern *one_of(Pattern *p1, Pattern *p2, slot_list into = {});
+Pattern *repeat(Pattern *pattern, slot_list into = {});
 Pattern *sequence(std::initializer_list<Pattern *> patterns,
                   slot_list into = {});
 

@@ -34,17 +34,17 @@ class ToAttribute : public Reduction {
 class ToAList : public Reduction {
   public:
     virtual bool perform(Token, ParseStack &s) override;
-    virtual ~ToAList();
+    virtual ~ToAList() = default;
     ToAList();
 
   private:
     void reset();
-    // name and value of the first attribute in the list
-    std::string name;
-    std::string value;
-    std::vector<Expression *> deletable;
-    StackPattern *pattern;
+    /*
+     * If a list exists, we can use it.
+     */
+    std::vector<Expression *> list;
     std::vector<Expression *> attributes;
+    Pat pattern;
 };
 
 /**

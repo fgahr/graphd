@@ -246,9 +246,11 @@ using pattern::add_to;
 using pattern::flag;
 using pattern::value;
 
+using pattern::has_type;
+
 ToAttribute::ToAttribute() : attr_name{""}, attr_value{""} {
     pattern.reset(pattern::sequence({
-        pattern::exact(',', {add_to(deletable)}),
+        pattern::optional(',', {add_to(deletable)}),
         pattern::identifier({value(attr_name), add_to(deletable)}),
         pattern::exact('=', {add_to(deletable)}),
         pattern::identifier({value(attr_value), add_to(deletable)}),
@@ -257,40 +259,45 @@ ToAttribute::ToAttribute() : attr_name{""}, attr_value{""} {
 
 bool ToAList::perform(Token, ParseStack &s) {
     reset();
+    StackWalker walker{s};
 
-    if (pattern->matches(s)) {
-        for (auto ex : deletable) {
-            delete ex;
-            s.pop_back();
-        }
-
-        expr::AList *list = new expr::AList;
-        list->add_attribute(new expr::Attribute{name, value});
-        s.push_back(list);
-        return true;
+    if (!pattern->match(walker)) {
+        return false;
     }
-    return false;
+
+    expr::AList *alist;
+    if (list.empty()) {
+        alist = new expr::AList;
+    } else {
+        alist = static_cast<expr::AList *>(list.front());
+    }
+
+    if (attributes.empty()) {
+        throw std::logic_error{"collecting attributes failed"};
+    }
+
+    for (auto attr : attributes) {
+        alist->add_attribute(static_cast<expr::Attribute *>(attr));
+        s.pop_back();
+    }
+
+    if (list.empty()) {
+        s.push_back(alist);
+    }
+
+    return true;
 }
 
 void ToAList::reset() {
-    name.clear();
-    value.clear();
-    deletable.clear();
     attributes.clear();
 }
 
 ToAList::ToAList() {
-    pattern = StackPatternBuilder::get()
-                  .one(token_p<TokenType::OPENING_SQUARE_BRACKET>)
-                  .one(identifier_token, &deletable, &name)
-                  .one(token_p<TokenType::EQUAL_SIGN>, &deletable)
-                  .one(identifier_token, &deletable, &value)
-                  .any(expr::Attribute::is_instance, &attributes)
-                  .build();
-}
-
-ToAList::~ToAList() {
-    delete pattern;
+    pattern.reset(pattern::sequence({
+        pattern::exact('['), // Leave this token in place
+        pattern::optional(has_type(ExprType::A_LIST, {add_to(list)})),
+        pattern::repeat(has_type(ExprType::ATTRIBUTE, {add_to(attributes)})),
+    }));
 }
 
 bool ToStatement::perform(Token, ParseStack &s) {
