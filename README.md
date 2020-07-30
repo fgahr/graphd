@@ -19,14 +19,20 @@ graph {
 $ bin/graphd -f test/input/small.dot 1 4
 total distance: 2
 1 -> 5 -> 4
-$ bin/graphd -f test/input/larger.dot a z
-total distance: 8
-a -> g -> f -> p -> o -> v -> u -> y -> z
+$ cat test/input/weighted.dot
+strict graph weights {
+    foo -- bar [weight=28];
+    foo -- baz [weight=2];
+    bar -- baz [weight=25.8];
+}
+$ bin/graphd -f test/input/weighted.dot foo bar
+total distance: 27.8
+foo -> baz -> bar
 ```
 
-The currently supported subset of DOT is in fact so small, that a scanf-based
-approach would be easiest. However, the parsing process was kept flexible enough
-that a larger subset could conceivably be supported in the future.
+The second example about covers the subset of DOT currently supported. There is
+no limit on the number of expressions. Attributes other than `weight` are
+ignored. Directed graphs are not allowed.
 
 ## Why DOT?
 

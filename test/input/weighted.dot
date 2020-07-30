@@ -1,0 +1,5 @@
+strict graph weights {
+    foo -- bar [weight=28];
+    foo -- baz [weight=2];
+    bar -- baz [weight=25.8];
+}
