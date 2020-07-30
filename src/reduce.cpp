@@ -63,6 +63,8 @@ bool ToAList::perform(Token, ParseStack &s) {
 
     if (list.empty()) {
         s.push_back(alist);
+    } else {
+        list.clear();
     }
 
     return true;
@@ -133,6 +135,8 @@ bool ToStmtList::perform(Token, ParseStack &s) {
     // slist might alredy be on the stack. Else we have to add it.
     if (list.empty()) {
         s.push_back(slist);
+    } else {
+        list.clear();
     }
 
     return true;

@@ -63,12 +63,20 @@ void AList::apply_to_graph(Graph &) {
         "'AList' object cannot be applied to graph directly"};
 }
 
+AList::~AList() {
+    for (auto attr : attributes) {
+        delete attr;
+    }
+}
+
 void AList::add_attribute(Attribute *attr) {
     attributes.push_back(attr);
 }
 
 AttributeList *AList::as_attr_list() {
-    return new AttributeList{std::move(attributes)};
+    auto attr_list = new AttributeList{std::move(attributes)};
+    attributes.clear();
+    return attr_list;
 }
 
 bool Statement::is_instance(Expression *e) {

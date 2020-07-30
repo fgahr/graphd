@@ -55,7 +55,7 @@ class AList : public Expression {
     static bool is_instance(Expression *e);
     virtual ExprType type() override;
     virtual void apply_to_graph(Graph &g) override;
-    virtual ~AList() = default;
+    virtual ~AList();
     void add_attribute(Attribute *attr);
     AttributeList *as_attr_list();
 

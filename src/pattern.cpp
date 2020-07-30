@@ -50,8 +50,8 @@ class TokenMatch : public Pattern {
 
         Token tok = static_cast<expr::TokenExpr *>(e)->token;
         if (tok.type == expected.type && tok.value == expected.value) {
-            for (size_t i = 0; i < slots.size(); i++) {
-                slots.at(i)->put(nullptr);
+            for (auto s : slots) {
+                s->put(e);
             }
             walker.shift();
             return true;
@@ -71,11 +71,7 @@ class TokenMatch : public Pattern {
 
 class IdentifierMatch : public Pattern {
   public:
-    IdentifierMatch(std::vector<Slot *> __slots) : slots{} {
-        for (auto s : __slots) {
-            slots.push_back(std::unique_ptr<Slot>{s});
-        }
-    }
+    IdentifierMatch(std::vector<Slot *> slots) : slots{slots} {}
     virtual bool match(StackWalker &walker) override {
         if (walker.exhausted()) {
             return false;
@@ -90,18 +86,23 @@ class IdentifierMatch : public Pattern {
         Token tok = static_cast<expr::TokenExpr *>(e)->token;
 
         if (tok.is_identifier()) {
-            for (size_t i = 0; i < slots.size(); i++) {
-                slots.at(i)->put(e);
+            for (auto s : slots) {
+                s->put(e);
             }
             walker.shift();
             return true;
         }
+
         return false;
     }
-    virtual ~IdentifierMatch() = default;
+    virtual ~IdentifierMatch() {
+        for (auto s : slots) {
+            delete s;
+        }
+    }
 
   private:
-    std::vector<std::unique_ptr<Slot>> slots;
+    std::vector<Slot *> slots;
 };
 
 class OptionalMatch : public Pattern {
@@ -112,8 +113,8 @@ class OptionalMatch : public Pattern {
         walker.save();
         if (pattern->match(walker)) {
             walker.forget();
-            for (size_t i = 0; i < slots.size(); i++) {
-                slots.at(i)->put(nullptr);
+            for (auto s : slots) {
+                s->put(nullptr);
             }
         } else {
             walker.restore();
@@ -140,16 +141,16 @@ class OneOfTwoMatch : public Pattern {
         walker.save();
         if (p1->match(walker)) {
             walker.forget();
-            for (size_t i = 0; i < slots.size(); i++) {
-                slots.at(i)->put(nullptr);
+            for (auto s : slots) {
+                s->put(nullptr);
             }
             return true;
         }
 
         walker.restore();
         if (p2->match(walker)) {
-            for (size_t i = 0; i < slots.size(); i++) {
-                slots.at(i)->put(nullptr);
+            for (auto s : slots) {
+                s->put(nullptr);
             }
             return true;
         }
@@ -192,6 +193,11 @@ class RepeatedMatch : public Pattern {
         }
         return false;
     }
+    virtual ~RepeatedMatch() {
+        for (auto s : slots) {
+            delete s;
+        }
+    }
 
   private:
     std::unique_ptr<Pattern> pattern;
@@ -217,6 +223,11 @@ class TypeMatch : public Pattern {
             return true;
         }
         return false;
+    }
+    virtual ~TypeMatch() {
+        for (auto s : slots) {
+            delete s;
+        }
     }
 
   private:
@@ -327,11 +338,11 @@ Pattern *exact(std::string token, slot_list into) {
 }
 
 Pattern *optional(char token, slot_list into) {
-    return new OptionalMatch{exact(token), into};
+    return new OptionalMatch{exact(token, into), {}};
 }
 
 Pattern *optional(std::string token, slot_list into) {
-    return new OptionalMatch{exact(token), into};
+    return new OptionalMatch{exact(token, into), {}};
 }
 
 Pattern *optional(Pattern *p, slot_list into) {
