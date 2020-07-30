@@ -64,11 +64,11 @@ class Pattern {
 
 using pat = std::unique_ptr<Pattern>;
 using slot = std::unique_ptr<Slot>;
-using slot_list = std::initializer_list<slot>;
+using slot_list = std::vector<slot>;
 
 slot flag(bool &b);
 slot value(std::string &value);
-slot add_to(std::vector<Expression *> &expressions);
+slot add_to(std::vector<Expression *> &into);
 
 pat exact(char token, slot_list into = {});
 pat exact(std::string token, slot_list into = {});
@@ -77,9 +77,8 @@ pat optional(std::string token, slot_list into = {});
 pat optional(pat &&p, slot_list into = {});
 pat identifier(slot_list into = {});
 
-// NOTE: a maximum of two options is enough for our purposes
 pat one_of(pat &&p1, pat &&p2, slot_list into = {});
-pat sequence(std::initializer_list<pat &&> patterns);
+pat sequence(std::initializer_list<pat &&> patterns, slot_list into = {});
 
 } // namespace graphd::input::pattern
 
