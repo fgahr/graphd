@@ -3,6 +3,8 @@
 
 #include <graphd/input/parse.hpp>
 
+#include <optional>
+
 namespace graphd::input::expr {
 
 typedef bool (*Predicate)(Expression *);
@@ -43,8 +45,9 @@ class AttributeList : public Expression {
     static bool is_instance(Expression *e);
     virtual ExprType type() override;
     virtual void apply_to_graph(Graph &g) override;
-    virtual ~AttributeList() = default;
+    virtual ~AttributeList();
     AttributeList(std::vector<Attribute *> &&attrs);
+    std::optional<std::string> get_attr(std::string name);
 
   private:
     std::vector<Attribute *> attributes;
@@ -73,13 +76,14 @@ class EdgeStmt : public Statement {
   public:
     virtual ExprType type() override;
     virtual void apply_to_graph(Graph &g) override;
-    virtual ~EdgeStmt() = default;
-    EdgeStmt(std::string n1name, std::string n2name);
+    virtual ~EdgeStmt();
+    EdgeStmt(std::string n1name, std::string n2name,
+             AttributeList *attrs = nullptr);
 
   private:
     std::string node1_name;
     std::string node2_name;
-    double distance = 1.0;
+    AttributeList *attr_list;
 };
 
 class StmtList : public Expression {

@@ -1,5 +1,6 @@
 #include <graphd/input/parser/expr.hpp>
 
+#include <string>
 #include <utility>
 
 namespace graphd::input::expr {
@@ -50,6 +51,21 @@ void AttributeList::apply_to_graph(Graph &) {
 AttributeList::AttributeList(std::vector<Attribute *> &&attrs)
     : attributes{attrs} {}
 
+AttributeList::~AttributeList() {
+    for (auto attr : attributes) {
+        delete attr;
+    }
+}
+
+std::optional<std::string> AttributeList::get_attr(std::string name) {
+    for (auto attr : attributes) {
+        if (attr->name == name) {
+            return attr->value;
+        }
+    }
+    return std::nullopt;
+}
+
 bool AList::is_instance(Expression *e) {
     return e->type() == ExprType::A_LIST;
 }
@@ -89,14 +105,24 @@ bool Statement::is_instance(Expression *e) {
     }
 }
 
-EdgeStmt::EdgeStmt(std::string n1name, std::string n2name)
-    : node1_name{n1name}, node2_name{n2name} {}
+EdgeStmt::EdgeStmt(std::string n1name, std::string n2name, AttributeList *attrs)
+    : node1_name{n1name}, node2_name{n2name}, attr_list{attrs} {}
+
+EdgeStmt::~EdgeStmt() {
+    delete attr_list;
+}
 
 ExprType EdgeStmt::type() {
     return ExprType::STATEMENT;
 }
 
 void EdgeStmt::apply_to_graph(Graph &g) {
+    double distance = 1.0;
+    if (attr_list) {
+        if (auto weight = attr_list->get_attr("weight"); weight.has_value()) {
+            distance = std::stod(weight.value());
+        }
+    }
     g.add_edge(node1_name, node2_name, distance);
 }
 

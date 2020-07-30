@@ -113,12 +113,20 @@ TEST(ReductionSuccess, attr_list) {
     reduce::ToAttrList to_attr_list;
     ParseStack stack;
     stack.push_back(new expr::TokenExpr{Token::from('[')});
-    stack.push_back(new expr::AList);
+    expr::AList *alist = new expr::AList;
+    alist->add_attribute(new expr::Attribute("name", "value"));
+    stack.push_back(alist);
     stack.push_back(new expr::TokenExpr{Token::from(']')});
 
     EXPECT_TRUE(to_attr_list.perform(Token::from(';'), stack));
     EXPECT_EQ(stack.size(), 1);
-    EXPECT_TRUE(expr::AttributeList::is_instance(stack.back()));
+    ASSERT_TRUE(expr::AttributeList::is_instance(stack.back()));
+
+    expr::AttributeList *attrs =
+        static_cast<expr::AttributeList *>(stack.back());
+    auto att = attrs->get_attr("name");
+    ASSERT_TRUE(att.has_value());
+    ASSERT_EQ(att.value(), "value");
 
     cleanup(stack);
 }
@@ -265,8 +273,8 @@ TEST(ReductionFail, graphNoGraph) {
 
 TEST(ParseSuccess, fullGraph) {
     std::istringstream in{"strict graph mygraph {\n"
-                          "    1 -- 2;\n"
-                          "    3 -- 1;\n"
+                          "    1 -- 2 [weight=2.38];\n"
+                          "    3 -- 1 [whatever=whocares];\n"
                           "    2 -- 3;\n"
                           "}"};
     auto p = Parser::of(in);

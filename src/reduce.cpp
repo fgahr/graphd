@@ -128,7 +128,13 @@ bool ToStatement::perform(Token, ParseStack &s) {
             s.pop_back();
         }
 
-        s.push_back(new expr::EdgeStmt{n1name, n2name});
+        expr::AttributeList *al = nullptr;
+        if (!attr_list.empty()) {
+            s.pop_back();
+            al = static_cast<expr::AttributeList *>(attr_list.front());
+        }
+
+        s.push_back(new expr::EdgeStmt{n1name, n2name, al});
         return true;
     }
     return false;
@@ -138,6 +144,7 @@ void ToStatement::reset() {
     n1name.clear();
     n2name.clear();
     deletable.clear();
+    attr_list.clear();
 }
 
 ToStatement::ToStatement() {
@@ -145,6 +152,7 @@ ToStatement::ToStatement() {
         identifier({value(n1name), add_to(deletable)}),
         exact("--", {add_to(deletable)}),
         identifier({value(n2name), add_to(deletable)}),
+        optional(has_type(ExprType::ATTRIBUTE_LIST, {add_to(attr_list)})),
         exact(';', {add_to(deletable)}),
     }));
 }

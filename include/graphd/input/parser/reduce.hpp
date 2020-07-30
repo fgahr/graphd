@@ -74,6 +74,7 @@ class ToStatement : public Reduction {
     std::string n1name;
     std::string n2name;
     std::vector<Expression *> deletable;
+    std::vector<Expression *> attr_list;
     Pat pattern;
 };
 

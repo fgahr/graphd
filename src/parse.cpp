@@ -47,7 +47,9 @@ Parser Parser::of(std::istream &in) {
     Tokenizer tok{in};
     Token next = tok.next_token();
     auto reductions = std::vector<Reduction *>{
-        new reduce::ToStatement, new reduce::ToStmtList, new reduce::ToGraph};
+        new reduce::ToStatement, new reduce::ToStmtList,
+        new reduce::ToGraph,     new reduce::ToAttribute,
+        new reduce::ToAList,     new reduce::ToAttrList};
     return Parser{tok, next, reductions};
 }
 
