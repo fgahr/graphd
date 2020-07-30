@@ -84,7 +84,6 @@ TEST(TokenizerMultipleTokens, simpleGraph) {
        << "}";
     Tokenizer tok{in};
 
-    // clang-format off
     std::vector<Token> expected{
         {TokenType::KEYWORD, "graph"},
         {TokenType::NAME, "gname"},
@@ -101,7 +100,6 @@ TEST(TokenizerMultipleTokens, simpleGraph) {
         {TokenType::CLOSING_BRACE, "}"},
         {TokenType::EOI, ""},
     };
-    // clang-format on
 
     for (auto ex : expected) {
         Token token = tok.next_token();

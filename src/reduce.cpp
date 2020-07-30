@@ -1,3 +1,4 @@
+#include <graphd/input/parser/pattern.hpp>
 #include <graphd/input/parser/reduce.hpp>
 
 #include <utility>
@@ -40,28 +41,7 @@ bool identifier_token(Expression *e) {
     return false;
 }
 
-class StackWalker {
-  public:
-    StackWalker(ParseStack &s) : stack{s} {
-        idx = s.size() - 1;
-    }
-    bool exhausted() {
-        return idx < 0;
-    }
-    bool has_next() {
-        return idx >= 0;
-    }
-    void shift() {
-        idx--;
-    }
-    Expression *get() {
-        return stack.at(idx);
-    }
-
-  private:
-    const ParseStack &stack;
-    int idx;
-};
+using pattern::StackWalker;
 
 struct ExprPattern {
     /**
