@@ -3,10 +3,13 @@
 
 #include <graphd/input/parse.hpp>
 #include <graphd/input/parser/expr.hpp>
+#include <graphd/input/parser/pattern.hpp>
 
 namespace graphd::input::reduce {
 
 class StackPattern;
+
+using _StackPattern = pattern::Pattern;
 
 /**
  * Reduction to a single attribute in an attribute list.
@@ -22,7 +25,7 @@ class ToAttribute : public Reduction {
     std::string attr_name;
     std::string attr_value;
     std::vector<Expression *> deletable;
-    StackPattern *pattern;
+    _StackPattern *pattern;
 };
 
 /**

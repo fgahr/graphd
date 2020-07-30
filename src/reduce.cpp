@@ -223,7 +223,8 @@ StackPattern *StackPatternBuilder::build() {
 
 bool ToAttribute::perform(Token, ParseStack &s) {
     reset();
-    if (pattern->matches(s)) {
+    StackWalker walker{s};
+    if (pattern->match(walker)) {
         for (auto ex : deletable) {
             delete ex;
             s.pop_back();
@@ -241,14 +242,18 @@ void ToAttribute::reset() {
     deletable.clear();
 }
 
+using pattern::add_to;
+using pattern::flag;
+using pattern::value;
+
 ToAttribute::ToAttribute() : attr_name{""}, attr_value{""}, deletable{} {
-    pattern = StackPatternBuilder::get()
-                  .one(token_p<TokenType::COMMA>, &deletable)
-                  .one(identifier_token, &deletable, &attr_name)
-                  .one(token_p<TokenType::EQUAL_SIGN>, &deletable)
-                  .one(identifier_token, &deletable, &attr_value)
-                  .build();
-}
+    pattern = pattern::sequence({
+        pattern::exact(',', {add_to(deletable)}),
+        pattern::identifier({value(attr_name), add_to(deletable)}),
+        pattern::exact('=', {add_to(deletable)}),
+        pattern::identifier({value(attr_value), add_to(deletable)}),
+    });
+} // namespace graphd::input::reduce
 
 ToAttribute::~ToAttribute() {
     delete pattern;
