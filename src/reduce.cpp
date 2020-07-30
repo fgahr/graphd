@@ -82,6 +82,43 @@ ToAList::ToAList() {
     }));
 }
 
+bool ToAttrList::perform(Token, ParseStack &s) {
+    reset();
+
+    StackWalker walker{s};
+
+    if (pattern->match(walker)) {
+        for (auto ex : deletable) {
+            delete ex;
+        }
+
+        s.pop_back(); // ']'
+        s.pop_back(); // alist <-- not deleted
+        s.pop_back(); // '['
+
+        expr::AList *attrs = static_cast<expr::AList *>(alist.front());
+        s.push_back(attrs->as_attr_list());
+        delete attrs;
+
+        return true;
+    }
+
+    return false;
+}
+
+void ToAttrList::reset() {
+    alist.clear();
+    deletable.clear();
+}
+
+ToAttrList::ToAttrList() {
+    pattern.reset(sequence({
+        exact('[', {add_to(deletable)}),
+        has_type(ExprType::A_LIST, {add_to(alist)}),
+        exact(']', {add_to(deletable)}),
+    }));
+}
+
 bool ToStatement::perform(Token, ParseStack &s) {
     reset();
     StackWalker walker{s};

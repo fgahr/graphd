@@ -47,6 +47,19 @@ class ToAList : public Reduction {
     Pat pattern;
 };
 
+class ToAttrList : public Reduction {
+  public:
+    virtual bool perform(Token, ParseStack &s) override;
+    virtual ~ToAttrList() = default;
+    ToAttrList();
+
+  private:
+    void reset();
+    std::vector<Expression *> alist;
+    std::vector<Expression *> deletable;
+    Pat pattern;
+};
+
 /**
  * Reduction to a single statement.
  */

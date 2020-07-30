@@ -109,6 +109,34 @@ TEST(ReductionFail, alist) {
     cleanup(stack);
 }
 
+TEST(ReductionSuccess, attr_list) {
+    reduce::ToAttrList to_attr_list;
+    ParseStack stack;
+    stack.push_back(new expr::TokenExpr{Token::from('[')});
+    stack.push_back(new expr::AList);
+    stack.push_back(new expr::TokenExpr{Token::from(']')});
+
+    EXPECT_TRUE(to_attr_list.perform(Token::from(';'), stack));
+    EXPECT_EQ(stack.size(), 1);
+    EXPECT_TRUE(expr::AttributeList::is_instance(stack.back()));
+
+    cleanup(stack);
+}
+
+TEST(ReductionFail, attr_list_no_alist) {
+    reduce::ToAttrList to_attr_list;
+    ParseStack stack;
+    stack.push_back(new expr::TokenExpr{Token::from('[')});
+    stack.push_back(new expr::Attribute("attr", "value"));
+    stack.push_back(new expr::TokenExpr{Token::from(']')});
+
+    auto pre_size = stack.size();
+    EXPECT_FALSE(to_attr_list.perform(Token::from(';'), stack));
+    EXPECT_EQ(stack.size(), pre_size);
+
+    cleanup(stack);
+}
+
 TEST(ReductionSuccess, statement) {
     reduce::ToStatement to_stmt;
     ParseStack stack;
