@@ -3,15 +3,17 @@
 
 #include <utility>
 
-#define AS_TOK(e) static_cast<expr::TokenExpr *>(e)
-#define AS_STMT(e) static_cast<expr::Statement *>(e)
+#define AS_TKN(e) static_cast<expr::TokenExpr *>(e)
 
 namespace graphd::input::reduce {
+
+using namespace pattern;
+
 static std::string getval(Expression *e) {
     if (!expr::TokenExpr::is_instance(e)) {
         throw std::logic_error{"mistakenly encountered non-token expression"};
     }
-    return AS_TOK(e)->token.value;
+    return AS_TKN(e)->token.value;
 }
 
 typedef bool (*ValuePredicate)(const std::string);
@@ -29,14 +31,14 @@ static bool kw_graph(const std::string s) {
 template <TokenType tt, ValuePredicate vp = any_value>
 bool token_p(Expression *e) {
     if (expr::TokenExpr::is_instance<tt>(e)) {
-        return vp(AS_TOK(e)->token.value);
+        return vp(AS_TKN(e)->token.value);
     }
     return false;
 }
 
 bool identifier_token(Expression *e) {
     if (expr::TokenExpr::is_instance(e)) {
-        return AS_TOK(e)->token.is_identifier();
+        return AS_TKN(e)->token.is_identifier();
     }
     return false;
 }
@@ -242,18 +244,12 @@ void ToAttribute::reset() {
     deletable.clear();
 }
 
-using pattern::add_to;
-using pattern::flag;
-using pattern::value;
-
-using pattern::has_type;
-
 ToAttribute::ToAttribute() : attr_name{""}, attr_value{""} {
-    pattern.reset(pattern::sequence({
-        pattern::optional(',', {add_to(deletable)}),
-        pattern::identifier({value(attr_name), add_to(deletable)}),
-        pattern::exact('=', {add_to(deletable)}),
-        pattern::identifier({value(attr_value), add_to(deletable)}),
+    pattern.reset(sequence({
+        optional(',', {add_to(deletable)}),
+        identifier({value(attr_name), add_to(deletable)}),
+        exact('=', {add_to(deletable)}),
+        identifier({value(attr_value), add_to(deletable)}),
     }));
 }
 
@@ -293,10 +289,10 @@ void ToAList::reset() {
 }
 
 ToAList::ToAList() {
-    pattern.reset(pattern::sequence({
-        pattern::exact('['), // Leave this token in place
-        pattern::optional(has_type(ExprType::A_LIST, {add_to(list)})),
-        pattern::repeated(has_type(ExprType::ATTRIBUTE, {add_to(attributes)})),
+    pattern.reset(sequence({
+        exact('['), // Leave this token in place
+        optional(has_type(ExprType::A_LIST, {add_to(list)})),
+        repeated(has_type(ExprType::ATTRIBUTE, {add_to(attributes)})),
     }));
 }
 
@@ -322,11 +318,11 @@ void ToStatement::reset() {
 }
 
 ToStatement::ToStatement() {
-    pattern.reset(pattern::sequence({
-        pattern::identifier({value(n1name), add_to(deletable)}),
-        pattern::exact("--", {add_to(deletable)}),
-        pattern::identifier({value(n2name), add_to(deletable)}),
-        pattern::exact(';', {add_to(deletable)}),
+    pattern.reset(sequence({
+        identifier({value(n1name), add_to(deletable)}),
+        exact("--", {add_to(deletable)}),
+        identifier({value(n2name), add_to(deletable)}),
+        exact(';', {add_to(deletable)}),
     }));
 }
 
@@ -346,7 +342,7 @@ bool ToStmtList::perform(Token, ParseStack &s) {
     }
 
     for (auto stmt : statements) {
-        slist->add_statement(AS_STMT(stmt));
+        slist->add_statement(static_cast<expr::Statement *>(stmt));
         s.pop_back();
     }
 
@@ -364,9 +360,9 @@ void ToStmtList::reset() {
 }
 
 ToStmtList::ToStmtList() {
-    pattern.reset(pattern::sequence({
-        pattern::optional(has_type(ExprType::STMT_LIST, {add_to(list)})),
-        pattern::repeated(has_type(ExprType::STATEMENT, {add_to(statements)})),
+    pattern.reset(sequence({
+        optional(has_type(ExprType::STMT_LIST, {add_to(list)})),
+        repeated(has_type(ExprType::STATEMENT, {add_to(statements)})),
     }));
 }
 
@@ -380,7 +376,9 @@ bool ToGraph::perform(Token lookahead, ParseStack &s) {
         return false;
     }
 
-    if (pattern->matches(s)) {
+    StackWalker walker{s};
+
+    if (pattern->match(walker)) {
         // Some expressions will be inaccessible, delete what we don't need.
         for (auto ex : deletable) {
             delete ex;
@@ -406,19 +404,14 @@ void ToGraph::reset() {
 }
 
 ToGraph::ToGraph() {
-    pattern =
-        StackPatternBuilder::get()
-            .optional(token_p<TokenType::KEYWORD, kw_strict>, &deletable)
-            .one(token_p<TokenType::KEYWORD, kw_graph>, &deletable)
-            .optional(token_p<TokenType::NAME, any_value>, &deletable, &name)
-            .one(token_p<TokenType::OPENING_BRACE>, &deletable)
-            .one(expr::StmtList::is_instance, &stmtList)
-            .one(token_p<TokenType::CLOSING_BRACE>, &deletable)
-            .build();
-}
-
-ToGraph::~ToGraph() {
-    delete pattern;
+    pattern.reset(sequence({
+        optional(exact("strict", {add_to(deletable)})),
+        exact("graph", {add_to(deletable)}),
+        optional(identifier({value(name), add_to(deletable)})),
+        exact('{', {add_to(deletable)}),
+        has_type(ExprType::STMT_LIST, {add_to(stmtList)}),
+        exact('}', {add_to(deletable)}),
+    }));
 }
 
 } // namespace graphd::input::reduce

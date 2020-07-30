@@ -86,7 +86,7 @@ class ToStmtList : public Reduction {
 class ToGraph : public Reduction {
   public:
     virtual bool perform(Token lookahead, ParseStack &s) override;
-    virtual ~ToGraph();
+    virtual ~ToGraph() = default;
     ToGraph();
 
   private:
@@ -94,7 +94,7 @@ class ToGraph : public Reduction {
     std::string name;
     std::vector<Expression *> stmtList;
     std::vector<Expression *> deletable;
-    StackPattern *pattern;
+    Pat pattern;
 };
 
 } // namespace graphd::input::reduce
