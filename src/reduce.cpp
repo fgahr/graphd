@@ -296,7 +296,7 @@ ToAList::ToAList() {
     pattern.reset(pattern::sequence({
         pattern::exact('['), // Leave this token in place
         pattern::optional(has_type(ExprType::A_LIST, {add_to(list)})),
-        pattern::repeat(has_type(ExprType::ATTRIBUTE, {add_to(attributes)})),
+        pattern::repeated(has_type(ExprType::ATTRIBUTE, {add_to(attributes)})),
     }));
 }
 
@@ -333,7 +333,9 @@ ToStatement::ToStatement() {
 bool ToStmtList::perform(Token, ParseStack &s) {
     reset();
     expr::StmtList *slist = nullptr;
-    if (!pattern->matches(s)) {
+
+    StackWalker walker{s};
+    if (!pattern->match(walker)) {
         return false;
     }
 
@@ -362,14 +364,10 @@ void ToStmtList::reset() {
 }
 
 ToStmtList::ToStmtList() {
-    pattern = StackPatternBuilder::get()
-                  .optional(expr::StmtList::is_instance, &list)
-                  .at_least_one(expr::Statement::is_instance, &statements)
-                  .build();
-}
-
-ToStmtList::~ToStmtList() {
-    delete pattern;
+    pattern.reset(pattern::sequence({
+        pattern::optional(has_type(ExprType::STMT_LIST, {add_to(list)})),
+        pattern::repeated(has_type(ExprType::STATEMENT, {add_to(statements)})),
+    }));
 }
 
 bool ToGraph::perform(Token lookahead, ParseStack &s) {

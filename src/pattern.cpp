@@ -235,7 +235,7 @@ class SequenceMatch : public Pattern {
         walker.save();
 
         for (auto it = patterns.rbegin(); it != patterns.rend(); it++) {
-            auto &p = *it;
+            auto p = *it;
             if (!p->match(walker)) {
                 walker.restore();
                 return false;
@@ -350,7 +350,7 @@ Pattern *one_of(Pattern *p1, Pattern *p2, slot_list into) {
     return new OneOfTwoMatch{p1, p2, into};
 }
 
-Pattern *repeat(Pattern *p, slot_list into) {
+Pattern *repeated(Pattern *p, slot_list into) {
     return new RepeatedMatch{p, into};
 }
 

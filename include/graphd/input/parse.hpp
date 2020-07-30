@@ -16,8 +16,8 @@ namespace graphd::input {
  */
 enum class ExprType {
     GRAPH,
-    STATEMENT_LIST,
-    EDGE_STATEMENT,
+    STMT_LIST,
+    STATEMENT,
     ATTRIBUTE,
     A_LIST,
     ATTRIBUTE_LIST,

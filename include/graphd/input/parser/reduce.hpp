@@ -70,14 +70,14 @@ class ToStatement : public Reduction {
 class ToStmtList : public Reduction {
   public:
     virtual bool perform(Token, ParseStack &s) override;
-    virtual ~ToStmtList();
+    virtual ~ToStmtList() = default;
     ToStmtList();
 
   private:
     void reset();
     std::vector<Expression *> list;
     std::vector<Expression *> statements;
-    StackPattern *pattern;
+    Pat pattern;
 };
 
 /**

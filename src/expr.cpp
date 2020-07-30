@@ -74,7 +74,7 @@ AttributeList *AList::as_attr_list() {
 bool Statement::is_instance(Expression *e) {
     switch (e->type()) {
     // NOTE: other statement types currently unsupported
-    case ExprType::EDGE_STATEMENT:
+    case ExprType::STATEMENT:
         return true;
     default:
         return false;
@@ -85,7 +85,7 @@ EdgeStmt::EdgeStmt(std::string n1name, std::string n2name)
     : node1_name{n1name}, node2_name{n2name} {}
 
 ExprType EdgeStmt::type() {
-    return ExprType::EDGE_STATEMENT;
+    return ExprType::STATEMENT;
 }
 
 void EdgeStmt::apply_to_graph(Graph &g) {
@@ -95,7 +95,7 @@ void EdgeStmt::apply_to_graph(Graph &g) {
 StmtList::StmtList() : statements{} {}
 
 ExprType StmtList::type() {
-    return ExprType::STATEMENT_LIST;
+    return ExprType::STMT_LIST;
 }
 
 void StmtList::apply_to_graph(Graph &g) {
@@ -115,7 +115,7 @@ void StmtList::add_statement(Statement *s) {
 }
 
 bool StmtList::is_instance(Expression *e) {
-    return e->type() == ExprType::STATEMENT_LIST;
+    return e->type() == ExprType::STMT_LIST;
 }
 
 FullGraph::FullGraph(std::string name, StmtList *stmtList)

@@ -78,7 +78,7 @@ Pattern *has_type(ExprType type, slot_list into = {});
 Pattern *identifier(slot_list into = {});
 
 Pattern *one_of(Pattern *p1, Pattern *p2, slot_list into = {});
-Pattern *repeat(Pattern *pattern, slot_list into = {});
+Pattern *repeated(Pattern *pattern, slot_list into = {});
 Pattern *sequence(std::initializer_list<Pattern *> patterns,
                   slot_list into = {});
 
