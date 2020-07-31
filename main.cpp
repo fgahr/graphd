@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <getopt.h>
@@ -25,7 +26,7 @@ int run(std::istream &in, int argc, char **argv) {
 
     try {
         graphd::Graph g;
-        graphd::input::Expression *e = parser.parse();
+        std::unique_ptr<graphd::input::Expression> e{parser.parse()};
         e->apply_to_graph(g);
 
         graphd::Path p = g.shortest_path(from_node, to_node);
